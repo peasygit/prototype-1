@@ -57,7 +57,10 @@ export default function HelperProfileClient({ helper }: HelperProfileClientProps
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+      {/* Scroll padding for sticky header */}
+      <style>{`html { scroll-padding-top: 80px; }`}</style>
+      
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
@@ -67,6 +70,9 @@ export default function HelperProfileClient({ helper }: HelperProfileClientProps
           </div>
         </div>
       </header>
+
+      {/* Space for fixed header */}
+      <div className="h-16" />
 
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
