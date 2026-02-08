@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  /* Primary - HSBC Red */
+  --primary: #DB0011;
+  --primary-hover: #B2000E;
+  --primary-active: #8B000D;
+
+  /* Background */
+  --bg-app: #FFFFFF;
+  --bg-surface: #F5F6FC;
+  --bg-surface-hover: #EBEFF8;
+
+  /* Text */
+  --text-main: #000000;
+  --text-secondary: #6E727D;
+  --text-tertiary: #989CA5;
+
+  /* Border */
+  --border-subtle: #EDEEF2;
+  --border-focus: #DB0011;
+
+  /* Radius */
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(219, 0, 17, 0.1);
+  color: var(--primary);
+}

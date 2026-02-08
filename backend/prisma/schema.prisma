@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String?
+  passwordHash  String
+  role          UserRole
+  status        UserStatus @default(active)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employer      Employer?
+  helper        Helper?
+  events        Event[]
+  subscriptions Subscription[]
+}
+
+model Employer {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                  String?
+  householdSize         Int?
+  adults                Int?
+  children              Int?
+  childrenAges          Json?
+  hasElderly            Boolean  @default(false)
+  elderlyCareNeeds      Json?
+  location              String?
+  languagePreferences   Json?
+  preferredHelperTraits Json?
+  householdRules        String?
+  preferredStartDate    DateTime?
+  birthdate             DateTime?
+  wuxingElement         String?
+  westernZodiac         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  jobs       Job[]
+}
+
+model Helper {
+  id                    String         @id @default(uuid())
+  userId                String         @unique
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName              String
+  displayName           String?
+  nationality           String
+  birthdate             DateTime
+  religion              String?
+  currentLocation       String
+  contractStatus        ContractStatus
+  availableFrom         DateTime?
+  yearsExperienceTotal  Int
+  yearsExperienceLocal  Int
+  educationLevel        String?
+  languages             Json?
+  aboutMe               String?        @db.Text
+  profilePhotoUrl       String?
+  expectedSalaryMin     Int?
+  expectedSalaryMax     Int?
+  personalityTraits     Json?
+  workStylePreference   String?
+  cannotAccept          Json?
+  wuxingElement         String?
+  westernZodiac         String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  skills          HelperSkill[]
+  careExperience  HelperCareExperience[]
+  applications    Match[]
+}
+
+model HelperSkill {
+  id                String @id @default(uuid())
+  helperId          String
+  helper            Helper @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  skillType         String
+  proficiencyLevel  String
+  createdAt         DateTime @default(now())
+
+  @@unique([helperId, skillType])
+}
+
+model HelperCareExperience {
+  id              String @id @default(uuid())
+  helperId        String
+  helper          Helper @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  targetType      String
+  yearsExperience Int
+  createdAt       DateTime @default(now())
+}
+
+model Job {
+  id                  String   @id @default(uuid())
+  employerId          String
+  employer            Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  title               String?
+  description         String?  @db.Text
+  duties              Json?
+  preferredExperienceYears Int?
+  preferredLanguages  Json?
+  preferredStartDate  DateTime?
+  salaryRange         String?
+  status              JobStatus @default(active)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  matches    Match[]
+}
+
+model Match {
+  id              String     @id @default(uuid())
+  jobId           String
+  job             Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  helperId        String
+  helper          Helper     @relation(fields: [helperId], references: [id], onDelete: Cascade)
+  sourceType      MatchSource @default(auto_match)
+  matchScore      Float
+  matchBreakdown  Json?
+  status          MatchStatus @default(pending)
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@unique([jobId, helperId])
+}
+
+model Subscription {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planType      PlanType
+  stripePaymentId String?
+  amount        Float
+  currency      String   @default("HKD")
+  status        SubscriptionStatus @default(active)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType   String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+enum UserRole {
+  employer
+  helper
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  inactive
+}
+
+enum ContractStatus {
+  finishing
+  early_termination
+  transfer
+  freelance
+  overseas
+}
+
+enum JobStatus {
+  active
+  filled
+  closed
+}
+
+enum MatchSource {
+  auto_match
+  helper_applied
+  admin_recommended
+}
+
+enum MatchStatus {
+  pending
+  shortlisted
+  interviewed
+  hired
+  rejected
+}
+
+enum PlanType {
+  day_7
+  day_30
+  day_60
+}
+
+enum SubscriptionStatus {
+  active
+  expired
+  cancelled
+}
