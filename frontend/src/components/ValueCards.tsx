@@ -1,52 +1,142 @@
 'use client';
 
-const values = [
+import { useEffect, useRef, useState } from 'react';
+import { Building2, ShieldCheck, Sparkles, Clock, Users, Leaf } from 'lucide-react';
+import { Card } from './ui';
+
+const features = [
   {
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M3 21h18M5 21V7l8-4 8 4v14M9 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    ),
+    icon: Building2,
     title: '家庭 HR，非中介',
     description: '我們以銀行級合規標準處理合約、簽證及薪酬管理。',
+    gradient: 'from-red-500 to-red-600',
+    bgColor: 'bg-red-50',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
+    icon: ShieldCheck,
     title: '公平與安全',
     description: '道德標準保護家庭與家庭傭工雙方權益。',
+    gradient: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-50',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
+    icon: Sparkles,
     title: '智能配對',
     description: '根據性格、技能及生活需求進行算法配對。',
+    gradient: 'from-purple-500 to-purple-600',
+    bgColor: 'bg-purple-50',
+  },
+];
+
+const additionalFeatures = [
+  {
+    icon: Clock,
+    title: '即時配對',
+    description: '24小時內收到推薦結果',
+  },
+  {
+    icon: Users,
+    title: '雙向評價',
+    description: '透明僱傳關係評價系統',
+  },
+  {
+    icon: Leaf,
+    title: '零碳足跡',
+    description: '數碼化流程減少紙張浪費',
   },
 ];
 
 export default function ValueCards() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="pb-16 lg:pb-24">
+    <section ref={sectionRef} className="relative -mt-20 lg:-mt-28">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-        <div className="grid md:grid-cols-3 gap-5">
-          {values.map((value, index) => (
-            <div
-              key={index}
-              className="bg-[#F5F6FC] rounded-2xl p-8 hover:bg-[#EBEFF8] transition-colors duration-200"
-            >
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#DB0011] mb-5">
-                {value.icon}
+        {/* Main Feature Cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-16">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className={`
+                  transition-all duration-700 ease-out
+                  ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
+                `}
+                style={{ transitionDelay: `${index * 150}ms` }}
+              >
+                <Card className="h-full group">
+                  <div className="space-y-5">
+                    {/* Icon */}
+                    <div className={`
+                      w-14 h-14 rounded-2xl flex items-center justify-center
+                      ${feature.bgColor} transition-transform duration-300 group-hover:scale-110
+                    `}>
+                      <Icon className={`w-7 h-7 text-red-600`} />
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-black group-hover:text-red-600 transition-colors">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
+
+                    {/* Decorative Line */}
+                    <div className="h-1 w-12 bg-gray-200 rounded-full group-hover:w-20 group-hover:bg-red-600 transition-all duration-300" />
+                  </div>
+                </Card>
               </div>
-              <h3 className="text-xl font-semibold text-black mb-2">{value.title}</h3>
-              <p className="text-[#6E727D] leading-relaxed">{value.description}</p>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+
+        {/* Additional Features */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {additionalFeatures.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className={`
+                  flex items-start gap-4 p-4 rounded-xl transition-all duration-300
+                  hover:bg-white hover:shadow-lg hover:shadow-gray-200/50
+                  ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                `}
+                style={{ transitionDelay: `${(features.length + index) * 100}ms` }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-5 h-5 text-gray-700" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-black mb-1">{feature.title}</h4>
+                  <p className="text-sm text-gray-500">{feature.description}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
