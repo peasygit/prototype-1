@@ -178,6 +178,56 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Verify Email (OTP)
+router.post('/verify', async (req, res) => {
+  try {
+    const { email, token } = req.body;
+
+    if (!email || !token) {
+      return res.status(400).json({ error: 'Email and verification code required' });
+    }
+
+    // Verify OTP with InsForge
+    // Use verifyEmail which accepts otp
+    let { data: authData, error: authError } = await insforge.auth.verifyEmail({
+      email,
+      otp: token,
+    });
+
+    if (authError) {
+      console.error('InsForge Verify Error:', authError);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    if (!authData || !authData.user || !authData.accessToken) {
+       return res.status(400).json({ error: 'Verification failed' });
+    }
+
+    // Ensure user exists in our DB
+    const user = await prisma.user.findUnique({
+      where: { id: authData.user.id },
+    });
+    
+    if (!user) {
+        return res.status(404).json({ error: 'User profile not found' });
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      },
+      token: authData.accessToken,
+    });
+
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
 // Get current user
 router.get('/me', authenticate, async (req: AuthRequest, res) => {
   try {

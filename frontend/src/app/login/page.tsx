@@ -15,6 +15,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationPending, setVerificationPending] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +81,35 @@ export default function Login() {
     }
   };
 
-  const handleVerificationComplete = () => {
-     // User claims verification complete, proceed to dashboard
+  const handleVerificationComplete = async () => {
+     // If user entered a code, try to verify with it
+     if (verificationCode) {
+         setIsLoading(true);
+         try {
+             const data = await api.post<{ user: any; token: string }>('/auth/verify', {
+                email,
+                token: verificationCode
+             });
+             
+             localStorage.setItem('token', data.token);
+             localStorage.setItem('user', JSON.stringify(data.user));
+             
+             // Check if user role matches selected type
+             if (data.user.role !== userType) {
+                // Adjust redirect if needed, or just warn
+             }
+
+             const redirectUrl = data.user.role === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
+             router.push(redirectUrl);
+         } catch (err: any) {
+             console.error(err);
+             alert(err.message || '驗證失敗，請檢查驗證碼');
+             setIsLoading(false);
+         }
+         return;
+     }
+
+     // User claims verification complete (link click), proceed to dashboard
      // IMPORTANT: We must ensure token is present, otherwise Dashboard will redirect back to login
      const token = localStorage.getItem('token');
      
@@ -115,15 +143,27 @@ export default function Login() {
             <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
             <p className="text-gray-600 mb-8 leading-relaxed">
               您的帳戶需要驗證電郵才能繼續。<br/>
-              我們已發送一封驗證信至 <strong>{email}</strong>。<br/>
-              請點擊信中的連結，然後點擊下方按鈕。
+              我們已發送一封包含驗證碼的信件至 <strong>{email}</strong>。<br/>
+              請輸入驗證碼，或點擊信中的連結。
             </p>
+            
+            <div className="mb-6 max-w-xs mx-auto">
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="輸入 6 位數驗證碼"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg tracking-widest"
+                />
+            </div>
+
             <div className="space-y-3">
               <button
                 onClick={handleVerificationComplete}
-                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto"
+                disabled={isLoading}
+                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto disabled:opacity-50"
               >
-                我已完成驗證，進入系統
+                {isLoading ? '驗證中...' : '驗證並進入系統'}
               </button>
               <div className="mt-4">
                  <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
