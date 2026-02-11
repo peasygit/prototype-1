@@ -1,17 +1,20 @@
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router, Request } from 'express';
+import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-interface AuthRequest extends any {
+interface AuthRequest extends Request {
   user?: { id: string; role: string; email: string };
 }
 
 // GET /api/employers/profile - Get employer profile
 router.get('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const employer = await prisma.employer.findUnique({
       where: { userId: req.user.id },
       include: {
@@ -72,6 +75,10 @@ router.post(
         wuxingElement,
         westernZodiac,
       } = req.body;
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
 
       let employer = await prisma.employer.findUnique({
         where: { userId: req.user.id },
@@ -144,6 +151,10 @@ router.post(
 // GET /api/employers/jobs - Get employer's jobs
 router.get('/jobs', authenticate, requireRole('employer'), async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const employer = await prisma.employer.findUnique({
       where: { userId: req.user.id },
     });
@@ -188,23 +199,27 @@ router.post(
   requireRole('employer'),
   async (req: AuthRequest, res) => {
     try {
-      const {
-        title,
-        description,
-        duties,
-        preferredExperienceYears,
-        preferredLanguages,
-        preferredStartDate,
-        salaryRange,
-      } = req.body;
+      if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
-      if (!title) {
-        return res.status(400).json({ error: 'Job title is required' });
-      }
+    const {
+      title,
+      description,
+      duties,
+      preferredExperienceYears,
+      preferredLanguages,
+      preferredStartDate,
+      salaryRange,
+    } = req.body;
 
-      const employer = await prisma.employer.findUnique({
-        where: { userId: req.user.id },
-      });
+    if (!title) {
+      return res.status(400).json({ error: 'Job title is required' });
+    }
+
+    const employer = await prisma.employer.findUnique({
+      where: { userId: req.user.id },
+    });
 
       if (!employer) {
         return res.status(404).json({ error: 'Employer not found' });
@@ -240,12 +255,14 @@ router.get(
     try {
       const { jobId } = req.params;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const job = await prisma.job.findUnique({
-        where: { id: jobId },
+        where: { id: jobId as string },
         include: {
-          employer: {
-            where: { userId: req.user.id },
-          },
+          employer: true,
           matches: {
             include: {
               helper: true,
@@ -255,7 +272,7 @@ router.get(
         },
       });
 
-      if (!job || job.employer.length === 0) {
+      if (!job || job.employer.userId !== req.user.id) {
         return res.status(404).json({ error: 'Job not found or not authorized' });
       }
 
@@ -277,8 +294,12 @@ router.put(
       const { jobId } = req.params;
       const { title, description, duties, preferredExperienceYears, preferredLanguages, preferredStartDate, salaryRange, status } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const job = await prisma.job.findUnique({
-        where: { id: jobId },
+        where: { id: jobId as string },
         include: {
           employer: true,
         },
@@ -289,7 +310,7 @@ router.put(
       }
 
       const updatedJob = await prisma.job.update({
-        where: { id: jobId },
+        where: { id: jobId as string },
         data: {
           title: title || undefined,
           description: description || undefined,
@@ -319,8 +340,12 @@ router.delete(
     try {
       const { jobId } = req.params;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const job = await prisma.job.findUnique({
-        where: { id: jobId },
+        where: { id: jobId as string },
         include: {
           employer: true,
         },
@@ -332,7 +357,7 @@ router.delete(
 
       // Soft delete by updating status
       const deletedJob = await prisma.job.update({
-        where: { id: jobId },
+        where: { id: jobId as string },
         data: { status: 'closed' },
       });
 
@@ -351,6 +376,10 @@ router.get(
   requireRole('employer'),
   async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const employer = await prisma.employer.findUnique({
         where: { userId: req.user.id },
       });

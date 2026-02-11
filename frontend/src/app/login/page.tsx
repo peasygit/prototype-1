@@ -2,24 +2,135 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, ChevronLeft } from 'lucide-react';
+import { api } from '@/utils/api';
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<'employer' | 'helper'>('employer');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [verificationPending, setVerificationPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    // Demo: redirect based on user type
-    const redirectUrl = userType === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
-    window.location.href = redirectUrl;
+    setError('');
+
+    try {
+      const data = await api.post<{ user: any; token: string; verificationRequired?: boolean }>('/auth/login', {
+        email,
+        password,
+      });
+
+      // Handle verification required (from Login flow)
+      if (data.verificationRequired) {
+          setVerificationPending(true);
+          // Still store token if available (DEV_TOKEN) to allow proceeding
+          if (data.token) {
+             localStorage.setItem('token', data.token);
+             localStorage.setItem('user', JSON.stringify(data.user));
+          } else {
+             // If no token (shouldn't happen with our backend fix), we can't let them proceed
+             // But we show the screen anyway. The button will just fail.
+             // Ideally we should re-login behind scenes or ask backend to issue token.
+             console.warn("No token received with verification requirement");
+          }
+          setIsLoading(false);
+          return;
+      }
+
+      // Store token
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Check if user role matches selected type (optional, but good UX)
+      if (data.user.role !== userType) {
+        // Warn or redirect to correct dashboard?
+        // For now, just redirect based on actual role
+      }
+
+      const redirectUrl = data.user.role === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
+      router.push(redirectUrl);
+    } catch (err: any) {
+      console.error(err);
+      
+      // Check for verification required error message even if status is error
+      if (err.message && (
+          err.message.includes('Email verification') || 
+          err.message.includes('Email not confirmed') ||
+          err.message.includes('verification required')
+      )) {
+          // Can't proceed without token in this case usually, but show UI
+          setVerificationPending(true);
+          setIsLoading(false);
+          return;
+      }
+      
+      setError(err.message || '登入失敗，請檢查您的資料');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleVerificationComplete = () => {
+     // User claims verification complete, proceed to dashboard
+     // IMPORTANT: We must ensure token is present, otherwise Dashboard will redirect back to login
+     const token = localStorage.getItem('token');
+     
+     if (!token) {
+        // This shouldn't happen if backend sent DEV_TOKEN, but if it does:
+        setError('無法驗證身份，請重新登入');
+        setVerificationPending(false);
+        return;
+     }
+
+     const redirectUrl = userType === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
+     router.push(redirectUrl);
+  };
+
+  if (verificationPending) {
+    return (
+      <div className="min-h-screen bg-white">
+        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
+            </div>
+          </div>
+        </header>
+        
+        <main className="py-24 px-6">
+          <div className="max-w-xl mx-auto text-center">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="text-4xl">✉️</div>
+            </div>
+            <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              您的帳戶需要驗證電郵才能繼續。<br/>
+              我們已發送一封驗證信至 <strong>{email}</strong>。<br/>
+              請點擊信中的連結，然後點擊下方按鈕。
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={handleVerificationComplete}
+                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto"
+              >
+                我已完成驗證，進入系統
+              </button>
+              <div className="mt-4">
+                 <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -65,18 +176,24 @@ export default function Login() {
             </button>
           </div>
 
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium text-center">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-black mb-2">
-                {userType === 'employer' ? 'Email / 電郵地址' : '電話號碼 / Phone'}
+                Email / 電郵地址
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={userType === 'employer' ? 'email' : 'tel'}
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={userType === 'employer' ? 'your@email.com' : '+852 0000 0000'}
+                  placeholder="your@email.com"
                   className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-xl focus:border-red-600 focus:outline-none transition-colors"
                   required
                 />
@@ -111,32 +228,28 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 mt-6"
+              className="w-full h-14 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isLoading ? '登入中...' : '登入'}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 text-sm">
-              {userType === 'employer' ? '還未有帳戶？' : '還未註冊？'}
-              {userType === 'employer' ? (
-                <Link href="/employers/questionnaire" className="text-red-600 hover:text-red-700 font-medium ml-1">
-                  填寫問卷開始
-                </Link>
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  登入中...
+                </>
               ) : (
-                <Link href="/helpers/register" className="text-red-600 hover:text-red-700 font-medium ml-1">
-                  立即註冊
-                </Link>
+                '登入'
               )}
-            </p>
-          </div>
+            </button>
 
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              登入即表示您同意我們的 <Link href="#" className="underline">服務條款</Link> 和 <Link href="#" className="underline">私隱政策</Link>
-            </p>
-          </div>
+            <div className="text-center">
+              <span className="text-gray-600 text-sm">還沒有帳號？</span>
+              <Link 
+                href={userType === 'employer' ? '/employers/register' : '/helpers/register'} 
+                className="text-red-600 font-medium text-sm hover:underline ml-1"
+              >
+                立即註冊
+              </Link>
+            </div>
+          </form>
         </div>
       </main>
     </div>

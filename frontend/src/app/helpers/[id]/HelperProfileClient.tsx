@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
@@ -17,8 +17,10 @@ import {
   Baby,
   Utensils,
   Sparkles,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
+import { api } from '@/utils/api';
 
 interface Helper {
   id: string;
@@ -48,12 +50,94 @@ interface Helper {
 }
 
 interface HelperProfileClientProps {
-  helper: Helper;
+  id: string;
 }
 
-export default function HelperProfileClient({ helper }: HelperProfileClientProps) {
+export default function HelperProfileClient({ id }: HelperProfileClientProps) {
+  const [helper, setHelper] = useState<Helper | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+
+  useEffect(() => {
+    const fetchHelper = async () => {
+      try {
+        setLoading(true);
+        const data = await api.get<any>(`/helpers/${id}`);
+        
+        // Transform backend data to frontend Helper interface
+        const transformedHelper: Helper = {
+          id: data.id,
+          name: data.fullName || data.displayName || 'Helper',
+          age: data.birthdate ? new Date().getFullYear() - new Date(data.birthdate).getFullYear() : 30,
+          nationality: data.nationality || 'Unknown',
+          experience: data.yearsExperienceTotal || 0,
+          rating: 4.8, // Mock
+          reviews: 12, // Mock
+          bio: data.aboutMe || 'No bio provided.',
+          skills: data.skills?.map((s: any) => s.skillType) || [],
+          languages: Array.isArray(data.languages) ? data.languages.map((l: string) => ({
+             name: l, level: 'Native', percentage: 100 
+          })) : [{ name: 'English', level: 'Basic', percentage: 50 }], 
+          certifications: [], // Mock
+          workHistory: data.careExperience?.map((exp: any, idx: number) => ({
+             id: idx,
+             role: exp.targetType,
+             period: 'N/A',
+             duration: exp.yearsExperience + ' years',
+             familyName: 'Employer',
+             location: 'Hong Kong',
+             duties: [],
+             rating: 5
+          })) || [],
+          availability: data.availableFrom ? new Date(data.availableFrom).toLocaleDateString() : 'Available',
+          expectedSalary: data.expectedSalaryMin ? `$${data.expectedSalaryMin} - $${data.expectedSalaryMax}` : 'Negotiable',
+          currentLocation: data.currentLocation || 'Hong Kong',
+          religion: data.religion || 'N/A',
+          maritalStatus: 'Single', // Missing in backend
+          cookingPreference: 'N/A', // Missing
+          petFriendly: true, // Missing
+          wuxing: data.wuxingElement || 'Fire',
+          zodiac: data.westernZodiac || 'Aries',
+          zodiacEmoji: '♈', // Simplified
+          matchScore: 90, // Mock
+          verified: true
+        };
+        
+        setHelper(transformedHelper);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load helper profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) fetchHelper();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+      </div>
+    );
+  }
+
+  if (error || !helper) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">無法載入資料</h2>
+          <p className="text-gray-600 mb-4">{error || '找不到此 Helper'}</p>
+          <Link href="/employers/dashboard" className="text-red-600 hover:text-red-700 font-medium">
+            返回首頁
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -199,6 +283,9 @@ export default function HelperProfileClient({ helper }: HelperProfileClientProps
                     )}
                   </div>
                 ))}
+                {helper.workHistory.length === 0 && (
+                  <p className="text-gray-500">暫無工作經驗記錄</p>
+                )}
               </div>
             </div>
 
@@ -245,6 +332,9 @@ export default function HelperProfileClient({ helper }: HelperProfileClientProps
                     </div>
                   </div>
                 ))}
+                {helper.certifications.length === 0 && (
+                  <p className="text-gray-500">暫無證書記錄</p>
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,4 @@
-import { PrismaClient, Helper, Job, Employer } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Helper, Job, Employer } from '@prisma/client';
 
 // Western Zodiac calculation
 function getWesternZodiac(birthdate: Date): string {

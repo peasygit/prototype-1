@@ -1,18 +1,21 @@
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router, Request } from 'express';
+import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-interface AuthRequest extends any {
+interface AuthRequest extends Request {
   user?: { id: string; role: string; email: string };
 }
 
 // GET /api/admin/users - List all users
 router.get('/users', authenticate, requireRole('admin'), async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const { role, status, page = 1, limit = 20 } = req.query;
 
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
@@ -69,8 +72,12 @@ router.get(
     try {
       const { userId } = req.params;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: userId as string },
         include: {
           employer: {
             include: {
@@ -114,12 +121,16 @@ router.put(
       const { userId } = req.params;
       const { status } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       if (!status || !['active', 'suspended', 'inactive'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
       }
 
       const user = await prisma.user.update({
-        where: { id: userId },
+        where: { id: userId as string },
         data: { status },
         select: {
           id: true,
@@ -160,12 +171,16 @@ router.put(
       const { userId } = req.params;
       const { role } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       if (!role || !['employer', 'helper', 'admin'].includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
       }
 
       const user = await prisma.user.update({
-        where: { id: userId },
+        where: { id: userId as string },
         data: { role },
         select: {
           id: true,
@@ -475,6 +490,10 @@ router.post(
       const { userId } = req.params;
       const { newPassword } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       if (!newPassword || newPassword.length < 6) {
         return res.status(400).json({ error: 'Password must be at least 6 characters' });
       }
@@ -482,7 +501,7 @@ router.post(
       const passwordHash = await bcrypt.hash(newPassword, 10);
 
       const user = await prisma.user.update({
-        where: { id: userId },
+        where: { id: userId as string },
         data: { passwordHash },
         select: {
           id: true,
@@ -520,8 +539,12 @@ router.post(
     try {
       const { jobId } = req.params;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const job = await prisma.job.update({
-        where: { id: jobId },
+        where: { id: jobId as string },
         data: { status: 'closed' },
       });
 
@@ -560,7 +583,7 @@ router.post(
       }
 
       const match = await prisma.match.findUnique({
-        where: { id: matchId },
+        where: { id: matchId as string },
       });
 
       if (!match) {
@@ -573,7 +596,7 @@ router.post(
         : `[Admin ${new Date().toISOString()}]: ${note}`;
 
       const updated = await prisma.match.update({
-        where: { id: matchId },
+        where: { id: matchId as string },
         data: { notes: updatedNotes },
       });
 

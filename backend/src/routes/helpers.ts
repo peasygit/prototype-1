@@ -1,17 +1,20 @@
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router, Request } from 'express';
+import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-interface AuthRequest extends any {
+interface AuthRequest extends Request {
   user?: { id: string; role: string; email: string };
 }
 
 // GET /api/helpers/profile - Get helper profile
 router.get('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const helper = await prisma.helper.findUnique({
       where: { userId: req.user.id },
       include: {
@@ -65,6 +68,10 @@ router.post(
         westernZodiac,
       } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       if (!fullName || !nationality) {
         return res.status(400).json({ error: 'Name and nationality are required' });
       }
@@ -73,10 +80,15 @@ router.post(
         where: { userId: req.user.id },
       });
 
+      // Validate required fields for creation
+      if (!helper && (!birthdate || !nationality)) {
+        return res.status(400).json({ error: 'Birthdate and nationality are required for new profiles' });
+      }
+
       if (helper) {
         // Update existing
         helper = await prisma.helper.update({
-          where: { userId: req.user.id },
+          where: { userId: req.user!.id },
           data: {
             fullName,
             displayName: displayName || undefined,
@@ -112,11 +124,11 @@ router.post(
         // Create new
         helper = await prisma.helper.create({
           data: {
-            userId: req.user.id,
+            userId: req.user!.id,
             fullName,
             displayName,
             nationality,
-            birthdate: birthdate ? new Date(birthdate) : undefined,
+            birthdate: new Date(birthdate!),
             religion,
             currentLocation,
             contractStatus,
@@ -162,6 +174,10 @@ router.post(
     try {
       const { skillType, proficiencyLevel } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       if (!skillType || !proficiencyLevel) {
         return res.status(400).json({ error: 'Skill type and proficiency level required' });
       }
@@ -202,6 +218,10 @@ router.post(
 // GET /api/helpers/skills - Get helper skills
 router.get('/skills', authenticate, async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const helper = await prisma.helper.findUnique({
       where: { userId: req.user.id },
     });
@@ -230,6 +250,10 @@ router.delete(
     try {
       const { skillId } = req.params;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const helper = await prisma.helper.findUnique({
         where: { userId: req.user.id },
       });
@@ -239,7 +263,7 @@ router.delete(
       }
 
       const skill = await prisma.helperSkill.findUnique({
-        where: { id: skillId },
+        where: { id: skillId as string },
       });
 
       if (!skill || skill.helperId !== helper.id) {
@@ -247,7 +271,7 @@ router.delete(
       }
 
       await prisma.helperSkill.delete({
-        where: { id: skillId },
+        where: { id: skillId as string },
       });
 
       res.json({ message: 'Skill deleted' });
@@ -266,6 +290,10 @@ router.post(
   async (req: AuthRequest, res) => {
     try {
       const { targetType, yearsExperience } = req.body;
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
 
       if (!targetType || yearsExperience === undefined) {
         return res.status(400).json({ error: 'Target type and years required' });
@@ -301,6 +329,10 @@ router.get(
   authenticate,
   async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const helper = await prisma.helper.findUnique({
         where: { userId: req.user.id },
       });
@@ -328,6 +360,10 @@ router.get(
   requireRole('helper'),
   async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const helper = await prisma.helper.findUnique({
         where: { userId: req.user.id },
       });
@@ -365,6 +401,10 @@ router.get(
 // GET /api/helpers/explore - Browse available jobs
 router.get('/explore', authenticate, requireRole('helper'), async (req: AuthRequest, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const { page = 1, limit = 20, location, salaryMin, salaryMax } = req.query;
 
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
@@ -441,6 +481,10 @@ router.post(
       const { jobId } = req.params;
       const { notes } = req.body;
 
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const helper = await prisma.helper.findUnique({
         where: { userId: req.user.id },
       });
@@ -450,7 +494,7 @@ router.post(
       }
 
       const job = await prisma.job.findUnique({
-        where: { id: jobId },
+        where: { id: jobId as string },
       });
 
       if (!job) {
@@ -461,7 +505,7 @@ router.post(
       const existing = await prisma.match.findUnique({
         where: {
           jobId_helperId: {
-            jobId,
+            jobId: jobId as string,
             helperId: helper.id,
           },
         },
@@ -474,7 +518,7 @@ router.post(
       // Create match with score based on basic compatibility
       const match = await prisma.match.create({
         data: {
-          jobId,
+          jobId: jobId as string,
           helperId: helper.id,
           sourceType: 'helper_applied',
           matchScore: 75, // Base score for helper-initiated applications
@@ -501,6 +545,10 @@ router.get(
   requireRole('helper'),
   async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const helper = await prisma.helper.findUnique({
         where: { userId: req.user.id },
       });
@@ -537,5 +585,37 @@ router.get(
     }
   }
 );
+
+// GET /api/helpers/:id - Get public helper profile
+router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const id = req.params.id as string;
+
+    // Allow employers to view helper profiles
+    // Allow helpers to view their own profile (though /profile is better)
+    // For now, just check authentication
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const helper = await prisma.helper.findUnique({
+      where: { id },
+      include: {
+        skills: true,
+        careExperience: true,
+        // Don't include user (email/phone) for public view unless unlocked
+      },
+    });
+
+    if (!helper) {
+      return res.status(404).json({ error: 'Helper not found' });
+    }
+
+    res.json(helper);
+  } catch (error) {
+    console.error('Get public helper profile error:', error);
+    res.status(500).json({ error: 'Failed to get helper profile' });
+  }
+});
 
 export default router;

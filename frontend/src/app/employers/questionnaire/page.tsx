@@ -2,12 +2,37 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react';
+import { api } from '@/utils/api';
 
-const steps = [
+interface Field {
+  name: string;
+  label: string;
+  type: string;
+  placeholder?: string;
+  options?: string[];
+}
+
+interface Step {
+  title: string;
+  fields: Field[];
+}
+
+const steps: Step[] = [
+  {
+    title: '帳戶設定',
+    fields: [
+      { name: 'email', label: '電郵地址', type: 'email', placeholder: 'your@email.com' },
+      { name: 'password', label: '密碼', type: 'password', placeholder: '至少8位字元' },
+      { name: 'confirmPassword', label: '確認密碼', type: 'password', placeholder: '再次輸入密碼' },
+      { name: 'phone', label: '電話號碼', type: 'tel', placeholder: '+852 0000 0000' },
+    ]
+  },
   {
     title: '基本資料',
     fields: [
+      { name: 'name', label: '您的稱呼', type: 'text', placeholder: '陳先生/小姐' },
       { name: 'familySize', label: '家庭人數', type: 'select', options: ['1-2人', '3-4人', '5-6人', '7人以上'] },
       { name: 'homeSize', label: '居住面積', type: 'select', options: ['< 400呎', '400-600呎', '600-800呎', '800-1000呎', '> 1000呎'] },
       { name: 'district', label: '居住地區', type: 'select', options: ['香港島', '九龍', '新界東', '新界西'] },
@@ -40,33 +65,214 @@ const steps = [
 ];
 
 export default function Questionnaire() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false); // Add verification state
 
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
+  };
+
+  const validateStep = () => {
+    const fields = steps[currentStep].fields;
+    for (const field of fields) {
+      if (field.type !== 'checkbox' && !formData[field.name]) {
+        setError(`請填寫${field.label}`);
+        return false;
+      }
+    }
+    
+    if (currentStep === 0) {
+      if (formData.password !== formData.confirmPassword) {
+        setError('兩次輸入的密碼不一致');
+        return false;
+      }
+      if (formData.password.length < 8) {
+        setError('密碼長度需至少8位字元');
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1);
+    if (validateStep()) {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(prev => prev + 1);
+        setError('');
+      }
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+      setError('');
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setIsComplete(true);
+  const convertHouseholdSize = (size: string) => {
+    if (size.includes('1-2')) return 2;
+    if (size.includes('3-4')) return 4;
+    if (size.includes('5-6')) return 6;
+    return 8;
   };
+
+  const convertExperience = (exp: string) => {
+    if (exp.includes('1-2')) return 2;
+    if (exp.includes('3-5')) return 4;
+    if (exp.includes('5')) return 6;
+    return 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep()) return;
+    
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      let token = localStorage.getItem('token');
+      
+      // 1. Register if no token found
+      if (!token) {
+        const authData = await api.post<{ user: any; token: string; verificationRequired?: boolean }>('/auth/register', {
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          role: 'employer'
+        });
+
+        // If verification is required, stop here and show verification UI
+        if (authData.verificationRequired) {
+           setVerificationPending(true);
+           // We still store the DEV_TOKEN if available to allow "I have verified" button to proceed
+           // But in a real app, we might wait. Here we store it but block UI.
+           if (authData.token) {
+             localStorage.setItem('token', authData.token);
+             localStorage.setItem('user', JSON.stringify(authData.user));
+           }
+           setIsSubmitting(false);
+           return;
+        }
+
+        token = authData.token;
+        localStorage.setItem('token', authData.token);
+        localStorage.setItem('user', JSON.stringify(authData.user));
+      }
+
+      // 2. Create Profile
+      const profileData = {
+        name: formData.name,
+        householdSize: convertHouseholdSize(formData.familySize),
+        location: formData.district,
+        languagePreferences: [formData.language],
+        preferredHelperTraits: [formData.personality],
+        // Other mappings
+      };
+
+      await api.post('/employers/profile', profileData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 3. Create Job
+      const jobData = {
+        title: `聘請家庭幫手 - ${formData.district}`,
+        description: `需要照顧${formData.careType}，${formData.workHours}，${formData.cooking}`,
+        duties: {
+          care: formData.careType,
+          cooking: formData.cooking,
+          driving: formData.driving,
+          housework: true
+        },
+        preferredExperienceYears: convertExperience(formData.experience),
+        preferredLanguages: [formData.language],
+        preferredStartDate: formData.startDate,
+        salaryRange: formData.budget,
+      };
+
+      await api.post('/employers/jobs', jobData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setIsComplete(true);
+    } catch (err: any) {
+      console.error(err);
+      
+      // Check for verification required error message
+      if (err.message && (
+          err.message.includes('Email verification') || 
+          err.message.includes('Email not confirmed') ||
+          err.message.includes('verification required')
+      )) {
+          // If this happens during profile/job creation (after registration),
+          // it means our token isn't valid yet or user needs to verify.
+          // We show the verification screen.
+          setVerificationPending(true);
+          setIsSubmitting(false);
+          return;
+      }
+
+      setError(err.message || '註冊失敗，請稍後再試');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerificationComplete = async () => {
+    // When user says they are verified, we try to proceed with profile creation
+    // In this prototype with DEV_TOKEN, it will just proceed.
+    // In real app, we might want to refresh token or call an endpoint to check verification status.
+    setIsSubmitting(true);
+    setVerificationPending(false);
+    
+    // We need to re-trigger the profile/job creation part. 
+    // Since handleSubmit is designed to be idempotent-ish (checks for token), calling it again works.
+    await handleSubmit();
+  };
+
+  if (verificationPending) {
+    return (
+      <div className="min-h-screen bg-white">
+        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+          <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
+            </div>
+          </div>
+        </header>
+        
+        <main className="py-24 px-6">
+          <div className="max-w-xl mx-auto text-center">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="text-4xl">✉️</div>
+            </div>
+            <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              我們已發送一封驗證信至 <strong>{formData.email}</strong>。<br/>
+              請點擊信中的連結以啟用您的帳戶。
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={handleVerificationComplete}
+                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto"
+              >
+                我已完成驗證，繼續
+              </button>
+              <div className="mt-4">
+                 <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (
@@ -143,11 +349,33 @@ export default function Questionnaire() {
           </div>
 
           <div className="bg-gray-50 rounded-2xl p-8">
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-red-600">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1">
+                  <p className="text-sm">{error}</p>
+                  {(error.toLowerCase().includes('exist') || error.toLowerCase().includes('registered')) && (
+                    <Link href="/login" className="text-sm font-bold underline hover:text-red-800">
+                      立即登入
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
             <h2 className="text-xl font-semibold text-black mb-6">{currentStepData.title}</h2>
             <div className="space-y-5">
               {currentStepData.fields.map((field) => (
                 <div key={field.name}>
                   <label className="block text-sm font-medium text-black mb-2">{field.label}</label>
+                  {field.type === 'text' || field.type === 'email' || field.type === 'password' || field.type === 'tel' ? (
+                     <input
+                      type={field.type}
+                      value={formData[field.name] || ''}
+                      onChange={(e) => handleInputChange(field.name, e.target.value)}
+                      placeholder={field.placeholder}
+                      className="w-full h-12 px-4 bg-white border border-gray-200 rounded-lg focus:border-red-600 focus:outline-none"
+                    />
+                  ) : null}
                   {field.type === 'select' && (
                     <select
                       value={formData[field.name] || ''}

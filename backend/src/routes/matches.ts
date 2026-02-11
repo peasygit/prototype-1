@@ -1,12 +1,11 @@
-import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Router, Request } from 'express';
+import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
-import { calculateMatchScore, MatchingData } from '../utils/matching';
+import { calculateMatchScore } from '../utils/matching';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-interface AuthRequest extends any {
+interface AuthRequest extends Request {
   user?: { id: string; role: string; email: string };
 }
 
@@ -15,8 +14,12 @@ router.get('/:jobId', authenticate, async (req: AuthRequest, res) => {
   try {
     const { jobId } = req.params;
 
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const job = await prisma.job.findUnique({
-      where: { id: jobId },
+      where: { id: jobId as string },
       include: {
         employer: {
           include: {
@@ -36,7 +39,7 @@ router.get('/:jobId', authenticate, async (req: AuthRequest, res) => {
     }
 
     const matches = await prisma.match.findMany({
-      where: { jobId },
+      where: { jobId: jobId as string },
       include: {
         helper: {
           select: {
@@ -70,6 +73,10 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
     const { status, sortBy = 'score', page = 1, limit = 20 } = req.query;
 
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
     let where: any = {};
 
@@ -121,6 +128,12 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
             nationality: true,
             profilePhotoUrl: true,
             yearsExperienceTotal: true,
+            skills: true,
+            languages: true,
+            availableFrom: true,
+            aboutMe: true,
+            expectedSalaryMin: true,
+            expectedSalaryMax: true,
           },
         },
         job: {
@@ -162,7 +175,7 @@ router.get(
       const { matchId } = req.params;
 
       const match = await prisma.match.findUnique({
-        where: { id: matchId },
+        where: { id: matchId as string },
         include: {
           helper: true,
           job: {
@@ -177,8 +190,12 @@ router.get(
         },
       });
 
-      if (!match) {
+      if (!match || !match.job) {
         return res.status(404).json({ error: 'Match not found' });
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
       }
 
       // Authorization check
@@ -211,6 +228,10 @@ router.post(
   async (req: AuthRequest, res) => {
     try {
       const { helperId, jobId } = req.body;
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
 
       if (!helperId || !jobId) {
         return res.status(400).json({ error: 'Helper ID and Job ID required' });
@@ -249,44 +270,20 @@ router.post(
         }
       }
 
-      // Prepare matching data
-      const matchingData: MatchingData = {
-        helper: {
-          id: helper.id,
-          yearsExperienceTotal: helper.yearsExperienceTotal,
-          yearsExperienceLocal: helper.yearsExperienceLocal,
-          languages: helper.languages as string[],
-          personalityTraits: helper.personalityTraits as Record<string, any>,
-          skills: helper.skills,
-          careExperience,
-          wuxingElement: helper.wuxingElement || undefined,
-          westernZodiac: helper.westernZodiac || undefined,
-          availableFrom: helper.availableFrom || undefined,
-          expectedSalaryMin: helper.expectedSalaryMin || undefined,
-          expectedSalaryMax: helper.expectedSalaryMax || undefined,
-        },
-        job: {
-          id: job.id,
-          preferredExperienceYears: job.preferredExperienceYears || undefined,
-          preferredLanguages: job.preferredLanguages as string[],
-          preferredStartDate: job.preferredStartDate || undefined,
-          salaryRange: job.salaryRange || undefined,
-          duties: job.duties as Record<string, any>,
-          description: job.description || undefined,
-        },
-        employer: {
-          id: job.employer.id,
-          preferredHelperTraits: job.employer.preferredHelperTraits as Record<string, any>,
-          languagePreferences: job.employer.languagePreferences as string[],
-          wuxingElement: job.employer.wuxingElement || undefined,
-          westernZodiac: job.employer.westernZodiac || undefined,
-        },
+      // Prepare employer data with computed fields
+      const employerWithComputed = {
+        ...job.employer,
+        hasChildren: (job.employer.children || 0) > 0,
       };
 
-      const { score, breakdown } = calculateMatchScore(matchingData);
+      const { totalScore, breakdown } = await calculateMatchScore(
+        helper,
+        job,
+        employerWithComputed
+      );
 
       res.json({
-        matchScore: score,
+        matchScore: totalScore,
         matchBreakdown: breakdown,
         helperId,
         jobId,
@@ -317,7 +314,7 @@ router.put(
       }
 
       const match = await prisma.match.findUnique({
-        where: { id: matchId },
+        where: { id: matchId as string },
         include: {
           job: {
             include: {
@@ -332,8 +329,12 @@ router.put(
         },
       });
 
-      if (!match) {
+      if (!match || !match.job) {
         return res.status(404).json({ error: 'Match not found' });
+      }
+
+      if (!req.user) {
+        return res.status(401).json({ error: 'User not authenticated' });
       }
 
       // Authorization - only employer or admin can update
@@ -345,7 +346,7 @@ router.put(
       }
 
       const updatedMatch = await prisma.match.update({
-        where: { id: matchId },
+        where: { id: matchId as string },
         data: {
           status,
           notes: notes || undefined,
@@ -420,46 +421,23 @@ router.post(
 
         if (existing) continue;
 
-        const matchingData: MatchingData = {
-          helper: {
-            id: helper.id,
-            yearsExperienceTotal: helper.yearsExperienceTotal,
-            yearsExperienceLocal: helper.yearsExperienceLocal,
-            languages: helper.languages as string[],
-            personalityTraits: helper.personalityTraits as Record<string, any>,
-            skills: helper.skills,
-            careExperience,
-            wuxingElement: helper.wuxingElement || undefined,
-            westernZodiac: helper.westernZodiac || undefined,
-            availableFrom: helper.availableFrom || undefined,
-            expectedSalaryMin: helper.expectedSalaryMin || undefined,
-            expectedSalaryMax: helper.expectedSalaryMax || undefined,
-          },
-          job: {
-            id: job.id,
-            preferredExperienceYears: job.preferredExperienceYears || undefined,
-            preferredLanguages: job.preferredLanguages as string[],
-            preferredStartDate: job.preferredStartDate || undefined,
-            salaryRange: job.salaryRange || undefined,
-            duties: job.duties as Record<string, any>,
-            description: job.description || undefined,
-          },
-          employer: {
-            id: job.employer.id,
-            preferredHelperTraits: job.employer.preferredHelperTraits as Record<string, any>,
-            languagePreferences: job.employer.languagePreferences as string[],
-            wuxingElement: job.employer.wuxingElement || undefined,
-            westernZodiac: job.employer.westernZodiac || undefined,
-          },
+        // Prepare employer data with computed fields
+        const employerWithComputed = {
+          ...job.employer,
+          hasChildren: (job.employer.children || 0) > 0,
         };
 
-        const { score, breakdown } = calculateMatchScore(matchingData);
+        const { totalScore, breakdown } = await calculateMatchScore(
+          helper,
+          job,
+          employerWithComputed
+        );
 
-        if (score >= threshold) {
+        if (totalScore >= threshold) {
           potentialMatches.push({
             jobId,
             helperId: helper.id,
-            matchScore: score,
+            matchScore: totalScore,
             matchBreakdown: breakdown,
             sourceType: 'auto_match',
           });
@@ -468,8 +446,10 @@ router.post(
 
       // Create matches in batch
       if (potentialMatches.length > 0) {
+        // Use any cast to bypass the type check for now since MatchSource is an enum
+        // and we are passing a string.
         const created = await prisma.match.createMany({
-          data: potentialMatches,
+          data: potentialMatches as any,
           skipDuplicates: true,
         });
 
@@ -496,7 +476,7 @@ router.delete('/:matchId', authenticate, async (req: AuthRequest, res) => {
     const { matchId } = req.params;
 
     const match = await prisma.match.findUnique({
-      where: { id: matchId },
+      where: { id: matchId as string },
       include: {
         job: {
           include: {
@@ -511,9 +491,13 @@ router.delete('/:matchId', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Match not found' });
     }
 
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     // Authorization
     if (req.user.role === 'employer') {
-      if (match.job.employer.userId !== req.user.id) {
+      if (!match.job || match.job.employer.userId !== req.user.id) {
         return res.status(403).json({ error: 'Not authorized' });
       }
     } else if (req.user.role === 'helper') {
@@ -527,7 +511,7 @@ router.delete('/:matchId', authenticate, async (req: AuthRequest, res) => {
 
     // Update status to rejected instead of hard delete
     const rejected = await prisma.match.update({
-      where: { id: matchId },
+      where: { id: matchId as string },
       data: { status: 'rejected' },
     });
 
