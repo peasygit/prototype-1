@@ -9,6 +9,7 @@ export default function DebugInfo() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    console.log('DebugInfo mounted'); // Verify mounting
     // Get the API URL from environment or default
     const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     setApiUrl(url);
@@ -39,7 +40,7 @@ export default function DebugInfo() {
   // Only show in development or if explicitly enabled, but for this troubleshooting session, always show it.
   // We can make it small and unobtrusive.
   return (
-    <div className="fixed bottom-4 right-4 p-4 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-95 z-50 max-w-sm break-all border border-gray-700">
+    <div className="fixed bottom-4 right-4 p-4 bg-gray-900 text-white text-xs rounded-lg shadow-2xl opacity-95 z-[9999] max-w-sm break-all border-2 border-white/20">
       <h3 className="font-bold mb-2 border-b border-gray-700 pb-1 flex justify-between items-center">
         <span>Debug Info</span>
         {status === 'ok' ? <span className="text-green-400">●</span> : <span className="text-red-400">●</span>}
