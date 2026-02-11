@@ -60,12 +60,15 @@ export default function Login() {
       console.error(err);
       
       // Check for verification required error message even if status is error
-      if (err.message && (
-          err.message.includes('Email verification') || 
-          err.message.includes('Email not confirmed') ||
-          err.message.includes('verification required')
-      )) {
+      const errorMessage = err.message?.toLowerCase() || '';
+      if (
+          errorMessage.includes('email verification') || 
+          errorMessage.includes('email not confirmed') ||
+          errorMessage.includes('email not verified') ||
+          errorMessage.includes('verification required')
+      ) {
           // Can't proceed without token in this case usually, but show UI
+          console.warn('Verification required detected in error:', errorMessage);
           setVerificationPending(true);
           setIsLoading(false);
           return;

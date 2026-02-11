@@ -110,16 +110,21 @@ router.post('/login', async (req, res) => {
       console.error('InsForge Auth Error:', authError);
       
       // DEV FIX: Check for verification issues
+      const errorMessage = authError.message.toLowerCase();
       const isVerificationError = 
-        authError.message.includes('Email verification') || 
-        authError.message.includes('Email not confirmed') ||
-        authError.message.includes('Invalid login credentials'); // Sometimes generic error is returned for unverified emails
+        errorMessage.includes('email verification') || 
+        errorMessage.includes('email not confirmed') ||
+        errorMessage.includes('email not verified') ||
+        errorMessage.includes('invalid login credentials'); // Sometimes generic error is returned for unverified emails
+
+      console.log(`Login error: ${authError.message}, treating as verification error: ${isVerificationError}`);
 
       if (isVerificationError) {
          // Try to find user in DB to see if they exist but might be unverified
          const user = await prisma.user.findUnique({ where: { email } });
          
          if (user) {
+             console.log(`User found in DB: ${user.id}, returning DEV_TOKEN`);
              // In dev mode, we assume they are unverified if login failed but user exists
              // And we allow them to proceed via the verification screen flow
              return res.status(200).json({
@@ -132,6 +137,8 @@ router.post('/login', async (req, res) => {
                 token: `DEV_TOKEN_${user.id}`,
                 verificationRequired: true
              });
+         } else {
+             console.log('User NOT found in DB despite verification error');
          }
       }
       return res.status(401).json({ error: authError.message });
