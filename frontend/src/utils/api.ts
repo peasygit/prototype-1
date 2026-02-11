@@ -1,4 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+console.log('API Base URL:', API_URL); // Debug log for deployment troubleshooting
 
 interface RequestOptions extends RequestInit {
   token?: string;
