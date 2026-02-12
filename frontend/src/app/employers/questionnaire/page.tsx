@@ -21,45 +21,46 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: '帳戶設定',
+    title: 'Account Settings',
     fields: [
-      { name: 'email', label: '電郵地址', type: 'email', placeholder: 'your@email.com' },
-      { name: 'password', label: '密碼', type: 'password', placeholder: '至少8位字元' },
-      { name: 'confirmPassword', label: '確認密碼', type: 'password', placeholder: '再次輸入密碼' },
-      { name: 'phone', label: '電話號碼', type: 'tel', placeholder: '+852 0000 0000' },
+      { name: 'email', label: 'Email Address', type: 'email', placeholder: 'your@email.com' },
+      { name: 'password', label: 'Password', type: 'password', placeholder: 'At least 8 characters' },
+      { name: 'confirmPassword', label: 'Confirm Password', type: 'password', placeholder: 'Re-enter password' },
+      { name: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+852 0000 0000' },
     ]
   },
   {
-    title: '基本資料',
+    title: 'Basic Information',
     fields: [
-      { name: 'name', label: '您的稱呼', type: 'text', placeholder: '陳先生/小姐' },
-      { name: 'familySize', label: '家庭人數', type: 'select', options: ['1-2人', '3-4人', '5-6人', '7人以上'] },
-      { name: 'homeSize', label: '居住面積', type: 'select', options: ['< 400呎', '400-600呎', '600-800呎', '800-1000呎', '> 1000呎'] },
-      { name: 'district', label: '居住地區', type: 'select', options: ['香港島', '九龍', '新界東', '新界西'] },
+      { name: 'name', label: 'Your Name', type: 'text', placeholder: 'Mr./Ms. Chan' },
+      { name: 'birthDate', label: 'Date of Birth', type: 'date' },
+      { name: 'familySize', label: 'Family Size', type: 'select', options: ['1-2 people', '3-4 people', '5-6 people', '7+ people'] },
+      { name: 'homeSize', label: 'Home Size', type: 'select', options: ['< 400 sq ft', '400-600 sq ft', '600-800 sq ft', '800-1000 sq ft', '> 1000 sq ft'] },
+      { name: 'district', label: 'District', type: 'select', options: ['Hong Kong Island', 'Kowloon', 'New Territories East', 'New Territories West'] },
     ]
   },
   {
-    title: '工作需求',
+    title: 'Job Requirements',
     fields: [
-      { name: 'careType', label: '主要照顧對象', type: 'select', options: ['嬰兒 (0-2歲)', '幼兒 (2-6歲)', '學童', '長者', '寵物', '家務'] },
-      { name: 'workHours', label: '工作時間', type: 'select', options: ['全職住家', '全職非住家', '兼職'] },
-      { name: 'startDate', label: '預計開始日期', type: 'date' },
+      { name: 'careType', label: 'Main Care Target', type: 'select', options: ['Infant (0-2y)', 'Toddler (2-6y)', 'School Age', 'Elderly', 'Pets', 'Housework Only'] },
+      { name: 'workHours', label: 'Work Schedule', type: 'select', options: ['Full-time Live-in', 'Full-time Live-out', 'Part-time'] },
+      { name: 'startDate', label: 'Expected Start Date', type: 'date' },
     ]
   },
   {
-    title: '技能要求',
+    title: 'Skills Required',
     fields: [
-      { name: 'cooking', label: '煮食要求', type: 'select', options: ['不需煮食', '簡單煮食', '一般家常菜', '擅長中菜', '擅長西餐', '需要烘焙'] },
-      { name: 'language', label: '語言要求', type: 'select', options: ['廣東話', '普通話', '英文', '印尼話', '菲律賓話'] },
-      { name: 'driving', label: '需要駕駛?', type: 'checkbox' },
+      { name: 'cooking', label: 'Cooking Skills', type: 'select', options: ['No Cooking', 'Basic Cooking', 'Chinese Cuisine', 'Western Cuisine', 'Baking'] },
+      { name: 'language', label: 'Language', type: 'select', options: ['Cantonese', 'Mandarin', 'English', 'Indonesian', 'Tagalog'] },
+      { name: 'driving', label: 'Driving Required?', type: 'checkbox' },
     ]
   },
   {
-    title: '配對偏好',
+    title: 'Preferences',
     fields: [
-      { name: 'experience', label: '經驗要求', type: 'select', options: ['新手亦可', '1-2年經驗', '3-5年經驗', '5年以上'] },
-      { name: 'personality', label: '期望性格', type: 'select', options: ['主動積極', '細心有耐心', '誠寶可靠', '獨立自主'] },
-      { name: 'budget', label: '月薪預算 (HKD)', type: 'select', options: ['$4,000-5,000', '$5,000-6,000', '$6,000-7,000', '$7,000-8,000', '$8,000以上'] },
+      { name: 'experience', label: 'Experience', type: 'select', options: ['Fresh Helper', '1-2 Years', '3-5 Years', '> 5 Years'] },
+      { name: 'personality', label: 'Personality', type: 'select', options: ['Proactive', 'Patient', 'Honest', 'Independent'] },
+      { name: 'budget', label: 'Monthly Budget (HKD)', type: 'select', options: ['$4,000-5,000', '$5,000-6,000', '$6,000-7,000', '$7,000-8,000', '> $8,000'] },
     ]
   },
 ];
@@ -71,7 +72,8 @@ export default function Questionnaire() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-  const [verificationPending, setVerificationPending] = useState(false); // Add verification state
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
 
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -82,18 +84,18 @@ export default function Questionnaire() {
     const fields = steps[currentStep].fields;
     for (const field of fields) {
       if (field.type !== 'checkbox' && !formData[field.name]) {
-        setError(`請填寫${field.label}`);
+        setError(`Please fill in ${field.label}`);
         return false;
       }
     }
     
     if (currentStep === 0) {
       if (formData.password !== formData.confirmPassword) {
-        setError('兩次輸入的密碼不一致');
+        setError('Passwords do not match');
         return false;
       }
       if (formData.password.length < 8) {
-        setError('密碼長度需至少8位字元');
+        setError('Password must be at least 8 characters');
         return false;
       }
     }
@@ -141,7 +143,7 @@ export default function Questionnaire() {
       
       // 1. Register if no token found
       if (!token) {
-        const authData = await api.post<{ user: any; token: string; verificationRequired?: boolean }>('/auth/register', {
+        const authData = await api.post<{ user: any; token: string; requireEmailVerification?: boolean }>('/auth/register', {
           email: formData.email,
           password: formData.password,
           phone: formData.phone,
@@ -149,7 +151,7 @@ export default function Questionnaire() {
         });
 
         // If verification is required, stop here and show verification UI
-        if (authData.verificationRequired) {
+        if (authData.requireEmailVerification || (authData as any).verificationRequired) {
            setVerificationPending(true);
            // We still store the DEV_TOKEN if available to allow "I have verified" button to proceed
            // But in a real app, we might wait. Here we store it but block UI.
@@ -182,8 +184,8 @@ export default function Questionnaire() {
 
       // 3. Create Job
       const jobData = {
-        title: `聘請家庭幫手 - ${formData.district}`,
-        description: `需要照顧${formData.careType}，${formData.workHours}，${formData.cooking}`,
+        title: `Hiring Helper - ${formData.district}`,
+        description: `Looking for care for ${formData.careType}, ${formData.workHours}, ${formData.cooking}`,
         duties: {
           care: formData.careType,
           cooking: formData.cooking,
@@ -218,16 +220,41 @@ export default function Questionnaire() {
           return;
       }
 
-      setError(err.message || '註冊失敗，請稍後再試');
+      setError(err.message || 'Registration failed, please try again later');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleVerificationComplete = async () => {
-    // When user says they are verified, we try to proceed with profile creation
-    // In this prototype with DEV_TOKEN, it will just proceed.
-    // In real app, we might want to refresh token or call an endpoint to check verification status.
+    // If user entered a code, try to verify with it
+    if (verificationCode) {
+         setIsSubmitting(true);
+         try {
+             const data = await api.post<{ user: any; token: string }>('/auth/verify', {
+                email: formData.email,
+                token: verificationCode,
+                role: 'employer',
+                phone: formData.phone,
+                name: formData.name
+             });
+             
+             localStorage.setItem('token', data.token);
+             localStorage.setItem('user', JSON.stringify(data.user));
+             
+             setVerificationPending(false);
+             // Retry submission (create profile/job)
+             await handleSubmit();
+         } catch (err: any) {
+             console.error(err);
+             alert(err.message || 'Verification failed, please check the code');
+             setIsSubmitting(false);
+         }
+         return;
+    }
+
+    // When user says they are verified (without code), we try to proceed with profile creation
+    // This supports the legacy link-click flow or dev token flow
     setIsSubmitting(true);
     setVerificationPending(false);
     
@@ -252,20 +279,32 @@ export default function Questionnaire() {
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <div className="text-4xl">✉️</div>
             </div>
-            <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
+            <h1 className="text-3xl font-semibold text-black mb-4">Please Verify Your Email</h1>
             <p className="text-gray-600 mb-8 leading-relaxed">
-              我們已發送一封驗證信至 <strong>{formData.email}</strong>。<br/>
-              請點擊信中的連結以啟用您的帳戶。
+              We have sent an email with a verification code to <strong>{formData.email}</strong>.<br/>
+              Please enter the code below, or click the link in the email to activate your account.
             </p>
+
+            <div className="mb-6 max-w-xs mx-auto">
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg tracking-widest"
+                />
+            </div>
+
             <div className="space-y-3">
               <button
                 onClick={handleVerificationComplete}
-                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto"
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto disabled:opacity-50"
               >
-                我已完成驗證，繼續
+                {isSubmitting ? 'Verifying...' : 'Verify & Submit'}
               </button>
               <div className="mt-4">
-                 <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
+                 <button className="text-gray-500 text-sm hover:underline">Didn't receive email? Resend</button>
               </div>
             </div>
           </div>
@@ -290,20 +329,20 @@ export default function Questionnaire() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-semibold text-black mb-4">問卷已提交！</h1>
+            <h1 className="text-3xl font-semibold text-black mb-4">Questionnaire Submitted!</h1>
             <p className="text-gray-600 mb-8 leading-relaxed">
-              感謝你填寫問卷。我們正在為你分析需求，並將在24小時內透過電郵發送最合適的配對結果。
+              Thank you for completing the questionnaire. We are analyzing your needs and will send the best matches to your email within 24 hours.
             </p>
             <div className="space-y-3">
               <Link
                 href="/employers/dashboard"
                 className="inline-flex items-center justify-center h-14 px-8 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-full transition-all"
               >
-                查看配對結果
+                View Matches
               </Link>
               <div>
                 <Link href="/" className="text-gray-600 hover:text-black underline">
-                  返回首頁
+                  Return to Home
                 </Link>
               </div>
             </div>
@@ -322,7 +361,7 @@ export default function Questionnaire() {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-            <Link href="/" className="text-gray-600 hover:text-black font-medium">返回首頁</Link>
+            <Link href="/" className="text-gray-600 hover:text-black font-medium">Return to Home</Link>
           </div>
         </div>
       </header>
@@ -331,7 +370,7 @@ export default function Questionnaire() {
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
             <div className="flex justify-between text-sm font-medium mb-2">
-              <span className="text-black">步驟 {currentStep + 1} / {steps.length}</span>
+              <span className="text-black">Step {currentStep + 1} / {steps.length}</span>
               <span className="text-gray-600">{currentStepData.title}</span>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -356,7 +395,7 @@ export default function Questionnaire() {
                   <p className="text-sm">{error}</p>
                   {(error.toLowerCase().includes('exist') || error.toLowerCase().includes('registered')) && (
                     <Link href="/login" className="text-sm font-bold underline hover:text-red-800">
-                      立即登入
+                      Login Now
                     </Link>
                   )}
                 </div>
@@ -382,7 +421,7 @@ export default function Questionnaire() {
                       onChange={(e) => handleInputChange(field.name, e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-gray-200 rounded-lg focus:border-red-600 focus:outline-none"
                     >
-                      <option value="">請選擇...</option>
+                      <option value="">Please Select...</option>
                       {field.options?.map((option) => (
                         <option key={option} value={option}>{option}</option>
                       ))}
@@ -404,7 +443,7 @@ export default function Questionnaire() {
                         onChange={(e) => handleInputChange(field.name, e.target.checked)}
                         className="w-5 h-5 accent-red-600"
                       />
-                      <span className="text-gray-600">是</span>
+                      <span className="text-gray-600">Yes</span>
                     </label>
                   )}
                 </div>
@@ -418,7 +457,7 @@ export default function Questionnaire() {
               disabled={currentStep === 0}
               className="inline-flex items-center gap-2 h-12 px-6 bg-transparent border-2 border-gray-200 hover:border-gray-800 text-black font-semibold rounded-full transition-all disabled:opacity-50"
             >
-              <ChevronLeft className="w-5 h-5" />上一步
+              <ChevronLeft className="w-5 h-5" />Back
             </button>
             
             {currentStep === steps.length - 1 ? (
@@ -427,14 +466,14 @@ export default function Questionnaire() {
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center h-12 px-8 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all disabled:opacity-50"
               >
-                {isSubmitting ? '提交中...' : '提交問卷'}
+                {isSubmitting ? 'Submitting...' : 'Submit Questionnaire'}
               </button>
             ) : (
               <button
                 onClick={handleNext}
                 className="inline-flex items-center gap-2 h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all"
               >
-                下一步<ChevronRight className="w-5 h-5" />
+                Next<ChevronRight className="w-5 h-5" />
               </button>
             )}
           </div>

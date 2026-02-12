@@ -141,6 +141,16 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
             id: true,
             title: true,
             salaryRange: true,
+            preferredStartDate: true,
+            duties: true,
+            employer: {
+              select: {
+                id: true,
+                name: true,
+                location: true,
+                householdSize: true,
+              }
+            }
           },
         },
       },

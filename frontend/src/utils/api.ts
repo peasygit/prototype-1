@@ -37,6 +37,18 @@ export const api = {
     const data = await response.json();
 
     if (!response.ok) {
+      // Handle 401 Unauthorized (Session expired or Invalid token)
+      if (response.status === 401 && typeof window !== 'undefined') {
+        // Don't redirect if it's a login attempt that failed (invalid credentials)
+        // Login endpoint is /auth/login
+        if (!endpoint.includes('/auth/login')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Redirect to login page
+            window.location.href = '/login?expired=true';
+            throw new Error('Session expired. Please login again.');
+        }
+      }
       throw new Error(data.error || 'Something went wrong');
     }
 

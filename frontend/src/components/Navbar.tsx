@@ -17,14 +17,14 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="#helpers" className="text-[#6E727D] hover:text-black font-medium transition-colors">
+            <Link href="/helpers/explore" className="text-[#6E727D] hover:text-black font-medium transition-colors">
               Find Helpers
             </Link>
-            <Link href="#helper-info" className="text-[#6E727D] hover:text-black font-medium transition-colors">
+            <Link href="/for-helpers" className="text-[#6E727D] hover:text-black font-medium transition-colors">
               For Helpers
             </Link>
-            <Link href="#process" className="text-[#6E727D] hover:text-black font-medium transition-colors">
-              Process
+            <Link href="/process" className="text-[#6E727D] hover:text-black font-medium transition-colors">
+              How it works
             </Link>
             <Link href="/login" className="text-[#DB0011] font-medium hover:text-[#B2000E] transition-colors">
               Log In
@@ -51,14 +51,14 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-[#EDEEF2]">
             <nav className="flex flex-col gap-4">
-              <Link href="#helpers" className="text-[#6E727D] hover:text-black font-medium py-2">
+              <Link href="/helpers/explore" className="text-[#6E727D] hover:text-black font-medium py-2">
                 Find Helpers
               </Link>
-              <Link href="#helper-info" className="text-[#6E727D] hover:text-black font-medium py-2">
+              <Link href="/for-helpers" className="text-[#6E727D] hover:text-black font-medium py-2">
                 For Helpers
               </Link>
-              <Link href="#process" className="text-[#6E727D] hover:text-black font-medium py-2">
-                Process
+              <Link href="/process" className="text-[#6E727D] hover:text-black font-medium py-2">
+                How it works
               </Link>
               <Link href="/login" className="text-[#DB0011] font-medium py-2">
                 Log In

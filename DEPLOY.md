@@ -2,39 +2,59 @@
 
 This project consists of a **Frontend (Next.js)** and a **Backend (Node.js/Express)**. Follow these steps to deploy them to Zeabur.
 
-## 1. Database Setup (PostgreSQL)
-Before deploying the application, you need a PostgreSQL database.
-1. Create a PostgreSQL service in Zeabur (or use Supabase/Neon).
-2. Get the connection string (e.g., `postgresql://user:password@host:port/dbname`).
-3. You will need this for the **Backend** environment variables.
+## 1. Prerequisites
+- A Zeabur account.
+- A GitHub account connected to Zeabur.
+- **InsForge Credentials** (from your backend `.env` or InsForge dashboard).
 
-## 2. Backend Deployment
-1. Create a new Service in Zeabur -> **Git**.
-2. Select this repository.
-3. **IMPORTANT**: Configure the service settings:
-   - **Root Directory**: `backend` (This tells Zeabur to look in the backend folder).
-   - **Watch Paths**: `backend/**` (Optional).
+## 2. Backend Deployment (Deploy First)
+
+1. **Create Service**: In Zeabur, create a new Service -> **Git**.
+2. **Select Repo**: Select this repository.
+3. **Settings**:
+   - **Root Directory**: `backend`
+   - **Watch Paths**: `backend/**` (optional)
 4. **Environment Variables**:
-   - `DATABASE_URL`: Your PostgreSQL connection string.
-   - `JWT_SECRET`: A long random string for security.
-   - `PORT`: `3001` (Or let Zeabur assign one, usually `8080` or `3000`. Our code uses `process.env.PORT || 3001`, so it will adapt).
-5. Deploy. Zeabur should detect it as a Node.js project and run `npm install && npm run build` and then start it.
-6. **Get the Backend URL**:
-   - Go to "Networking" or "Domains" in Zeabur for the backend service.
-   - Create a domain (e.g., `peasy-backend.zeabur.app`).
-   - **Copy this URL**. You need it for the frontend.
+   Add the following variables in the **Variables** tab:
+   
+   | Variable | Value | Description |
+   |----------|-------|-------------|
+   | `DATABASE_URL` | `postgresql://...` | Your InsForge/Postgres connection string |
+   | `INSFORGE_API_URL` | `https://7jy9rxai.us-east.insforge.app` | InsForge API URL |
+   | `INSFORGE_ANON_KEY` | `ik_79a7478f43b81c046050de130453fa02` | InsForge Anon Key |
+   | `JWT_SECRET` | (Generate a random string) | For secure fallback decoding |
+   | `PORT` | `3001` | Optional (Zeabur usually sets PORT) |
+
+5. **Deploy**: Click Deploy. Zeabur will install dependencies and start the server.
+6. **Domain**:
+   - Go to **Networking** or **Domains**.
+   - Create a public domain (e.g., `peasy-backend.zeabur.app`).
+   - **COPY THIS URL**. You need it for the frontend.
 
 ## 3. Frontend Deployment
-1. Create a new Service in Zeabur -> **Git**.
-2. Select this repository (again).
-3. **IMPORTANT**: Configure the service settings:
-   - **Root Directory**: `frontend`.
+
+1. **Create Service**: In Zeabur, create a new Service -> **Git**.
+2. **Select Repo**: Select this repository (again).
+3. **Settings**:
+   - **Root Directory**: `frontend`
 4. **Environment Variables**:
-   - `NEXT_PUBLIC_API_URL`: `https://your-backend-url.zeabur.app/api` (Replace with the URL from Step 2. **Must include `/api` at the end**).
-5. Deploy. Zeabur should detect it as a Next.js project.
-6. Visit your frontend domain.
+   
+   | Variable | Value | Description |
+   |----------|-------|-------------|
+   | `NEXT_PUBLIC_API_URL` | `https://peasy-backend.zeabur.app/api` | **Must include `/api` suffix**. Replace with YOUR backend domain. |
+
+5. **Deploy**: Click Deploy.
+6. **Domain**:
+   - Create a public domain (e.g., `peasy-frontend.zeabur.app`).
+   - Visit this URL to use your app!
 
 ## Troubleshooting
-- **Connection Failed**: Check the "Debug Info" box on the Login page.
-- **Database Error**: Check Backend logs in Zeabur. Ensure `DATABASE_URL` is correct.
-- **CORS Error**: If you see CORS errors in the browser console, you may need to configure CORS in `backend/src/server.ts` to only allow your frontend domain. (Currently it allows all origins `*`, so it should work).
+
+- **"Session expired" or Login Loop**:
+  - Ensure `NEXT_PUBLIC_API_URL` is correct and publicly accessible.
+  - Check that Backend has `INSFORGE_API_URL` and keys set correctly.
+- **Build Failed**:
+  - Check logs in Zeabur.
+  - Ensure `output: 'standalone'` is set in `next.config.ts` (it is configured by default now).
+- **CORS Errors**:
+  - The backend is configured to allow all origins (`cors()`), so this shouldn't be an issue. If strict CORS is needed later, update `backend/src/server.ts`.

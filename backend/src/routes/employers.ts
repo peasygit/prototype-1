@@ -1,6 +1,7 @@
 import { Router, Request } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
+import { calculateMatchScore } from '../utils/matching';
 
 const router = Router();
 
@@ -213,6 +214,27 @@ router.post(
       salaryRange,
     } = req.body;
 
+    const normalizedDuties = Array.isArray(duties)
+      ? duties.filter(Boolean)
+      : typeof duties === 'string'
+        ? [duties]
+        : duties && typeof duties === 'object'
+          ? Object.entries(duties).flatMap(([key, value]) => {
+              const result = [];
+              if (value === true) {
+                result.push(key);
+              } else if (typeof value === 'string') {
+                result.push(value);
+                // Add standard key mapping for matching
+                if (key === 'cooking' && value !== 'No Cooking') result.push('cooking');
+                if (key === 'care') result.push('care');
+              } else if (typeof value === 'number') {
+                result.push(String(value));
+              }
+              return result;
+            }).filter(Boolean)
+          : [];
+
     if (!title) {
       return res.status(400).json({ error: 'Job title is required' });
     }
@@ -230,13 +252,52 @@ router.post(
           employerId: employer.id,
           title,
           description,
-          duties,
+          duties: normalizedDuties,
           preferredExperienceYears,
           preferredLanguages,
           preferredStartDate: preferredStartDate ? new Date(preferredStartDate) : undefined,
           salaryRange,
         },
       });
+
+      const helpers = await prisma.helper.findMany({
+        include: {
+          skills: true,
+          careExperience: true,
+        },
+      });
+
+      const employerWithComputed = {
+        ...employer,
+        hasChildren: (employer.children || 0) > 0,
+        hasElderly: !!employer.hasElderly,
+      };
+
+      const potentialMatches = [];
+      for (const helper of helpers) {
+        const { totalScore, breakdown } = await calculateMatchScore(
+          helper,
+          { ...job, duties: normalizedDuties },
+          employerWithComputed
+        );
+
+        if (totalScore >= 50) {
+          potentialMatches.push({
+            jobId: job.id,
+            helperId: helper.id,
+            matchScore: totalScore,
+            matchBreakdown: breakdown,
+            sourceType: 'auto_match',
+          });
+        }
+      }
+
+      if (potentialMatches.length > 0) {
+        await prisma.match.createMany({
+          data: potentialMatches as any,
+          skipDuplicates: true,
+        });
+      }
 
       res.status(201).json(job);
     } catch (error) {

@@ -1,0 +1,386 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Helper Dashboard - Peasy</title>
+    <style vid="5">
+        :root {
+            --primary: #DB0011;
+            --primary-hover: #B2000E;
+            --bg-body: #0D0D0D; 
+            --bg-app: #FFFFFF;
+            --bg-surface: #F5F6FC; 
+            --bg-surface-hover: #EBEFF8;
+            --text-main: #000000; 
+            --text-secondary: #6E727D; 
+            --text-tertiary: #989CA5;
+            --border-subtle: #EDEEF2;
+            --radius-lg: 24px; 
+            --radius-md: 16px; 
+            --radius-sm: 12px; 
+            --radius-pill: 999px;
+            --space-xs: 8px;
+            --space-sm: 12px;
+            --space-md: 20px;
+            --space-lg: 32px;
+            --space-xl: 48px;
+            --space-2xl: 80px;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-weight-regular: 400;
+            --font-weight-medium: 500;
+            --font-weight-bold: 600;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #F9FAFB;
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 var(--space-xl);
+        }
+
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-xs { gap: var(--space-xs); }
+        .gap-sm { gap: var(--space-sm); }
+        .gap-md { gap: var(--space-md); }
+        .gap-lg { gap: var(--space-lg); }
+
+        .header {
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 24px;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+            text-decoration: none;
+        }
+
+        .profile-nav {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: 4px 16px 4px 6px;
+            background: var(--bg-surface);
+            border-radius: var(--radius-pill);
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: var(--space-lg);
+            padding: var(--space-xl) 0;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .text-h2 { font-size: 28px; font-weight: var(--font-weight-bold); letter-spacing: -0.02em; }
+        .text-h3 { font-size: 18px; font-weight: var(--font-weight-bold); }
+        .text-body-sm { font-size: 14px; color: var(--text-secondary); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px; 
+            padding: 0 20px;
+            border-radius: var(--radius-pill); 
+            font-size: 14px;
+            font-weight: var(--font-weight-bold);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-secondary { background-color: var(--bg-surface); color: var(--text-main); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-subtle); color: var(--text-main); }
+
+        
+        .match-row {
+            display: grid;
+            grid-template-columns: 64px 1fr auto;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .match-row:last-child { border-bottom: none; }
+        
+        .family-icon {
+            width: 64px;
+            height: 64px;
+            background: #F0F2F5;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        
+        .progress-bar {
+            height: 8px;
+            background: var(--border-subtle);
+            border-radius: var(--radius-pill);
+            margin: var(--space-xs) 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: var(--radius-pill);
+        }
+
+        
+        .sidebar-item {
+            padding: var(--space-md);
+            background: var(--bg-surface);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-sm);
+        }
+
+        .date-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+        }
+
+        .icon-box { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-high { background: #DCFCE7; color: #166534; }
+        .status-pending { background: #FEF9C3; color: #854D0E; }
+
+    </style>
+</head>
+<body vid="6">
+
+    <header class="header" vid="7">
+        <div class="container flex justify-between items-center" vid="8">
+            <div class="flex items-center gap-lg" vid="9">
+                <a href="/" class="nav-logo" vid="10">Peasy</a>
+                <nav class="flex items-center" vid="11">
+                    <a href="#" class="nav-link active" style="margin-left: var(--space-md); color: var(--text-main); font-weight: 600; text-decoration: none;" vid="12">Dashboard</a>
+                    <a href="#" class="nav-link" style="margin-left: var(--space-lg); color: var(--text-secondary); text-decoration: none;" vid="13">Jobs</a>
+                    <a href="#" class="nav-link" style="margin-left: var(--space-lg); color: var(--text-secondary); text-decoration: none;" vid="14">Academy</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-md" vid="15">
+                <button style="background: none; border: none; cursor: pointer; color: var(--text-secondary);" vid="16">
+                    <svg class="icon-box" viewBox="0 0 24 24" vid="17"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" vid="18"></path><path d="M13.73 21a2 2 0 0 1-3.46 0" vid="19"></path></svg>
+                </button>
+                <a href="#" class="profile-nav" vid="20">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&amp;q=80" alt="Elena" class="avatar-sm" vid="21">
+                    <span vid="22">Elena</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container" vid="23">
+        <div class="dashboard-grid" vid="24">
+            
+            <div vid="25">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-lg);" vid="26">
+                    <h1 class="text-h2" vid="27">Good morning, Elena 👋</h1>
+                    <div class="flex gap-sm" vid="28">
+                        <button class="btn btn-outline" vid="29">Edit Profile</button>
+                        <button class="btn btn-primary" vid="30">Find New Jobs</button>
+                    </div>
+                </div>
+
+                
+                <section class="card" vid="31">
+                    <div class="card-header" vid="32">
+                        <h3 class="text-h3" vid="33">Top Job Matches (3)</h3>
+                        <a href="#" style="color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none;" vid="34">View all matches</a>
+                    </div>
+                    <div class="match-list" vid="35">
+                        <div class="match-row" vid="36">
+                            <div class="family-icon" vid="37">👨‍👩‍👧</div>
+                            <div vid="38">
+                                <div class="flex items-center gap-sm" vid="39">
+                                    <h4 class="text-h3" style="font-size: 16px; margin-bottom: 0;" vid="40">The Chen Family</h4>
+                                    <span class="status-badge status-high" vid="41">98% Match</span>
+                                </div>
+                                <p class="text-body-sm" vid="42">Repulse Bay • 2 Children • Culinary Focus</p>
+                            </div>
+                            <div class="flex gap-sm" vid="43">
+                                <button class="btn btn-secondary" vid="44">Decline</button>
+                                <button class="btn btn-primary" vid="45">View Details</button>
+                            </div>
+                        </div>
+
+                        <div class="match-row" vid="46">
+                            <div class="family-icon" vid="47">🏘️</div>
+                            <div vid="48">
+                                <div class="flex items-center gap-sm" vid="49">
+                                    <h4 class="text-h3" style="font-size: 16px; margin-bottom: 0;" vid="50">The Harrison Residence</h4>
+                                    <span class="status-badge status-high" vid="51">92% Match</span>
+                                </div>
+                                <p class="text-body-sm" vid="52">Mid-Levels • Newborn Care • Pet Friendly</p>
+                            </div>
+                            <div class="flex gap-sm" vid="53">
+                                <button class="btn btn-secondary" vid="54">Decline</button>
+                                <button class="btn btn-primary" vid="55">View Details</button>
+                            </div>
+                        </div>
+
+                        <div class="match-row" vid="56">
+                            <div class="family-icon" vid="57">👴</div>
+                            <div vid="58">
+                                <div class="flex items-center gap-sm" vid="59">
+                                    <h4 class="text-h3" style="font-size: 16px; margin-bottom: 0;" vid="60">The Lim Family</h4>
+                                    <span class="status-badge status-pending" style="background: #DBEAFE; color: #1E40AF;" vid="61">85% Match</span>
+                                </div>
+                                <p class="text-body-sm" vid="62">Orchard Road, SG • Elderly Care Assistance</p>
+                            </div>
+                            <div class="flex gap-sm" vid="63">
+                                <button class="btn btn-secondary" vid="64">Decline</button>
+                                <button class="btn btn-primary" vid="65">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                
+                <section class="card" vid="66">
+                    <div class="card-header" vid="67">
+                        <h3 class="text-h3" vid="68">Peasy Academy Progress</h3>
+                        <button class="btn btn-outline" style="height: 32px; padding: 0 12px;" vid="69">Resume Training</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);" vid="70">
+                        <div vid="71">
+                            <div class="flex justify-between" vid="72">
+                                <span class="text-h3" style="font-size: 14px;" vid="73">Advanced Newborn Care</span>
+                                <span class="text-body-sm" vid="74">75%</span>
+                            </div>
+                            <div class="progress-bar" vid="75"><div class="progress-fill" style="width: 75%;" vid="76"></div></div>
+                            <p class="text-body-sm" vid="77">Next: Sleep Schedules &amp; Routine</p>
+                        </div>
+                        <div vid="78">
+                            <div class="flex justify-between" vid="79">
+                                <span class="text-h3" style="font-size: 14px;" vid="80">Western Culinary Arts</span>
+                                <span class="text-body-sm" vid="81">40%</span>
+                            </div>
+                            <div class="progress-bar" vid="82"><div class="progress-fill" style="width: 40%;" vid="83"></div></div>
+                            <p class="text-body-sm" vid="84">Next: Sauce Bases &amp; Presentation</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            
+            <aside vid="85">
+                <div class="card" style="padding: var(--space-md);" vid="86">
+                    <h3 class="text-h3" style="margin-bottom: var(--space-md); font-size: 16px;" vid="87">Upcoming Interviews</h3>
+                    
+                    <div class="sidebar-item flex gap-sm items-center" vid="88">
+                        <div class="date-badge" vid="89">
+                            <span style="font-size: 10px; color: var(--primary);" vid="90">OCT</span>
+                            <span vid="91">24</span>
+                        </div>
+                        <div vid="92">
+                            <div class="text-h3" style="font-size: 14px; margin-bottom: 2px;" vid="93">Chen Family</div>
+                            <div class="text-body-sm" vid="94">10:30 AM • Video Call</div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-item flex gap-sm items-center" vid="95">
+                        <div class="date-badge" vid="96">
+                            <span style="font-size: 10px; color: var(--primary);" vid="97">OCT</span>
+                            <span vid="98">26</span>
+                        </div>
+                        <div vid="99">
+                            <div class="text-h3" style="font-size: 14px; margin-bottom: 2px;" vid="100">Harrison Residence</div>
+                            <div class="text-body-sm" vid="101">02:00 PM • Coffee Meetup</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: var(--space-md);" vid="102">
+                    <div class="flex justify-between items-center" style="margin-bottom: var(--space-md);" vid="103">
+                        <h3 class="text-h3" style="font-size: 16px; margin-bottom: 0;" vid="104">Messages</h3>
+                        <span class="status-badge" style="background: var(--primary); color: white;" vid="105">2 New</span>
+                    </div>
+                    
+                    <div class="flex gap-sm items-start" style="padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border-subtle); margin-bottom: var(--space-sm);" vid="106">
+                        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=100&amp;q=80" alt="Family" class="avatar-sm" vid="107">
+                        <div vid="108">
+                            <div class="text-h3" style="font-size: 14px; margin-bottom: 2px;" vid="109">Sarah Chen</div>
+                            <p class="text-body-sm" style="color: var(--text-main); font-weight: 500;" vid="110">"We loved your cooking portfolio! Can you..."</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-sm items-start" vid="111">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&amp;q=80" alt="Family" class="avatar-sm" vid="112">
+                        <div vid="113">
+                            <div class="text-h3" style="font-size: 14px; margin-bottom: 2px;" vid="114">James Lim</div>
+                            <p class="text-body-sm" vid="115">"Thank you for the application. We are looking..."</p>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline" style="width: 100%; margin-top: var(--space-md);" vid="116">Open Inbox</button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+</body></html>

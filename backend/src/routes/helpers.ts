@@ -8,6 +8,84 @@ interface AuthRequest extends Request {
   user?: { id: string; role: string; email: string };
 }
 
+// GET / - List helpers with filters (Public)
+router.get('/', async (req, res) => {
+  try {
+    const {
+      nationality,
+      minExperience,
+      maxExperience,
+      skills,
+      limit = '20',
+      offset = '0'
+    } = req.query;
+
+    const where: any = {};
+
+    // Filter by nationality
+    if (nationality) {
+      where.nationality = nationality as string;
+    }
+
+    // Filter by experience
+    if (minExperience || maxExperience) {
+      where.yearsExperienceTotal = {};
+      if (minExperience) where.yearsExperienceTotal.gte = parseInt(minExperience as string);
+      if (maxExperience) where.yearsExperienceTotal.lte = parseInt(maxExperience as string);
+    }
+
+    // Filter by skills
+    if (skills) {
+      const skillList = (skills as string).split(',');
+      where.skills = {
+        some: {
+          skillType: {
+            in: skillList,
+            mode: 'insensitive'
+          }
+        }
+      };
+    }
+
+    // Only active helpers (using relation filter on User model)
+    where.user = {
+      status: 'active'
+    };
+
+    const helpers = await prisma.helper.findMany({
+      where,
+      take: parseInt(limit as string),
+      skip: parseInt(offset as string),
+      include: {
+        skills: true,
+        careExperience: true,
+        user: {
+          select: {
+            status: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const total = await prisma.helper.count({ where });
+
+    res.json({
+      data: helpers,
+      pagination: {
+        total,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      }
+    });
+  } catch (error) {
+    console.error('List helpers error:', error);
+    res.status(500).json({ error: 'Failed to list helpers' });
+  }
+});
+
 // GET /api/helpers/profile - Get helper profile
 router.get('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
@@ -66,6 +144,8 @@ router.post(
         cannotAccept,
         wuxingElement,
         westernZodiac,
+        skills,
+        careExperience,
       } = req.body;
 
       if (!req.user) {
@@ -84,6 +164,23 @@ router.post(
       if (!helper && (!birthdate || !nationality)) {
         return res.status(400).json({ error: 'Birthdate and nationality are required for new profiles' });
       }
+
+      // Prepare skills and careExperience operations
+      const skillsOp = skills ? {
+        deleteMany: {},
+        create: Array.isArray(skills) ? skills.map((s: any) => ({
+          skillType: typeof s === 'string' ? s : s.skillType,
+          proficiencyLevel: s.proficiencyLevel || 'good'
+        })) : []
+      } : undefined;
+
+      const careExperienceOp = careExperience ? {
+        deleteMany: {},
+        create: Array.isArray(careExperience) ? careExperience.map((c: any) => ({
+          targetType: typeof c === 'string' ? c : c.targetType,
+          yearsExperience: c.yearsExperience || 1
+        })) : []
+      } : undefined;
 
       if (helper) {
         // Update existing
@@ -111,6 +208,8 @@ router.post(
             cannotAccept: cannotAccept || undefined,
             wuxingElement: wuxingElement || undefined,
             westernZodiac: westernZodiac || undefined,
+            skills: skillsOp,
+            careExperience: careExperienceOp,
           },
           include: {
             user: {
@@ -146,6 +245,18 @@ router.post(
             cannotAccept,
             wuxingElement,
             westernZodiac,
+            skills: skills ? {
+              create: Array.isArray(skills) ? skills.map((s: any) => ({
+                skillType: typeof s === 'string' ? s : s.skillType,
+                proficiencyLevel: s.proficiencyLevel || 'good'
+              })) : []
+            } : undefined,
+            careExperience: careExperience ? {
+              create: Array.isArray(careExperience) ? careExperience.map((c: any) => ({
+                targetType: typeof c === 'string' ? c : c.targetType,
+                yearsExperience: c.yearsExperience || 1
+              })) : []
+            } : undefined,
           },
           include: {
             user: {
@@ -586,17 +697,10 @@ router.get(
   }
 );
 
-// GET /api/helpers/:id - Get public helper profile
-router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+// GET /:id - Get public helper profile (Public)
+router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id as string;
-
-    // Allow employers to view helper profiles
-    // Allow helpers to view their own profile (though /profile is better)
-    // For now, just check authentication
-    if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
 
     const helper = await prisma.helper.findUnique({
       where: { id },

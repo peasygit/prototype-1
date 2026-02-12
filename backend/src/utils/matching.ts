@@ -28,7 +28,7 @@ function getZodiacElement(zodiac: string): string {
 
   if (fire.includes(zodiac)) return 'fire';
   if (earth.includes(zodiac)) return 'earth';
-  if (air.includes(zodiac)) return 'wood'; // Air maps to Wood (变通)
+  if (air.includes(zodiac)) return 'wood'; // Air maps to Wood (Adaptation)
   return 'water';
 }
 
@@ -121,7 +121,18 @@ export async function calculateMatchScore(helper: any, job: any, employer: any):
   let elementBonus = 0;      // Max 5
   let zodiacBonus = 0;       // Max 5
 
-  const jobDuties = job.duties || [];
+  const jobDuties = Array.isArray(job.duties)
+    ? job.duties.filter(Boolean)
+    : typeof job.duties === 'string'
+      ? [job.duties]
+      : job.duties && typeof job.duties === 'object'
+        ? Object.entries(job.duties).flatMap(([key, value]) => {
+            if (value === true) return [key];
+            if (typeof value === 'string') return [value];
+            if (typeof value === 'number') return [String(value)];
+            return [];
+          }).filter(Boolean)
+        : [];
   const employerLanguages = employer.languagePreferences || [];
   const employerTraits = employer.preferredHelperTraits || [];
 
@@ -138,10 +149,17 @@ export async function calculateMatchScore(helper: any, job: any, employer: any):
   }
 
   // Care experience matching
-  if (employer.hasChildren && helperCareExperience.some((c: string) => c.includes('child') || c.includes('infant'))) {
+  const hasChildCareDuty = jobDuties.some((d: string) => 
+    d.includes('child') || d.includes('infant') || d.includes('baby') || d.includes('kid') || d.includes('toddler')
+  );
+  if ((employer.hasChildren || hasChildCareDuty) && helperCareExperience.some((c: string) => c.includes('child') || c.includes('infant'))) {
     skillScore += 10;
   }
-  if (employer.hasElderly && helperCareExperience.some((c: string) => c.includes('elderly'))) {
+
+  const hasElderlyCareDuty = jobDuties.some((d: string) => 
+    d.includes('elderly') || d.includes('senior') || d.includes('grandma') || d.includes('grandpa')
+  );
+  if ((employer.hasElderly || hasElderlyCareDuty) && helperCareExperience.some((c: string) => c.includes('elderly'))) {
     skillScore += 10;
   }
 
@@ -182,7 +200,9 @@ export async function calculateMatchScore(helper: any, job: any, employer: any):
 
   // 4. Language Score (10%)
   const helperLanguages = helper.languages || [];
-  const helperLangs = helperLanguages.map((l: any) => l.lang);
+  const helperLangs = Array.isArray(helperLanguages)
+    ? helperLanguages.map((l: any) => (typeof l === 'string' ? l : l?.lang)).filter(Boolean)
+    : [];
   let langMatches = 0;
   for (const lang of employerLanguages) {
     if (helperLangs.includes(lang)) {

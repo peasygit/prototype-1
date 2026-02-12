@@ -13,24 +13,24 @@ export default function Footer() {
               Peasy
             </Link>
             <p className="text-[#6E727D] mt-3 max-w-sm">
-              你的家庭人力資源顧問。不只找外傭，更是家庭人力顧問。
+              Your family HR consultant. More than just finding a helper.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold text-black mb-4">僱主</h4>
+            <h4 className="font-semibold text-black mb-4">Employers</h4>
             <ul className="space-y-2">
-              <li><Link href="/employers/questionnaire" className="text-[#6E727D] hover:text-black transition-colors">尋找幫手</Link></li>
-              <li><Link href="#" className="text-[#6E727D] hover:text-black transition-colors">登入</Link></li>
+              <li><Link href="/employers/questionnaire" className="text-[#6E727D] hover:text-black transition-colors">Find Helper</Link></li>
+              <li><Link href="#" className="text-[#6E727D] hover:text-black transition-colors">Login</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-black mb-4">幫手</h4>
+            <h4 className="font-semibold text-black mb-4">Helpers</h4>
             <ul className="space-y-2">
-              <li><Link href="/helpers/register" className="text-[#6E727D] hover:text-black transition-colors">建立檔案</Link></li>
-              <li><Link href="#" className="text-[#6E727D] hover:text-black transition-colors">常見問題</Link></li>
+              <li><Link href="/helpers/register" className="text-[#6E727D] hover:text-black transition-colors">Create Profile</Link></li>
+              <li><Link href="#" className="text-[#6E727D] hover:text-black transition-colors">FAQ</Link></li>
             </ul>
           </div>
         </div>
@@ -40,8 +40,8 @@ export default function Footer() {
             © 2026 Peasy. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link href="#" className="text-sm text-[#6E727D] hover:text-black transition-colors">私隱政策</Link>
-            <Link href="#" className="text-sm text-[#6E727D] hover:text-black transition-colors">服務條款</Link>
+            <Link href="#" className="text-sm text-[#6E727D] hover:text-black transition-colors">Privacy Policy</Link>
+            <Link href="#" className="text-sm text-[#6E727D] hover:text-black transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -1,50 +1,34 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Building2, ShieldCheck, Sparkles, Clock, Users, Leaf } from 'lucide-react';
+import { Building2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Card } from './ui';
 
 const features = [
   {
     icon: Building2,
-    title: '家庭 HR，非中介',
-    description: '我們以銀行級合規標準處理合約、簽證及薪酬管理。',
+    title: 'Family HR, Not Agency',
+    description: 'We handle contracts, visas, and payroll with bank-grade compliance.',
     gradient: 'from-red-500 to-red-600',
     bgColor: 'bg-red-50',
   },
   {
     icon: ShieldCheck,
-    title: '公平與安全',
-    description: '道德標準保護家庭與家庭傭工雙方權益。',
+    title: 'Fair & Safe',
+    description: 'Ethical standards protecting both families and helpers.',
     gradient: 'from-blue-500 to-blue-600',
     bgColor: 'bg-blue-50',
   },
   {
     icon: Sparkles,
-    title: '智能配對',
-    description: '根據性格、技能及生活需求進行算法配對。',
+    title: 'Smart Matching',
+    description: 'Algorithmic matching based on personality, skills, and lifestyle.',
     gradient: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-50',
   },
 ];
 
-const additionalFeatures = [
-  {
-    icon: Clock,
-    title: '即時配對',
-    description: '24小時內收到推薦結果',
-  },
-  {
-    icon: Users,
-    title: '雙向評價',
-    description: '透明僱傳關係評價系統',
-  },
-  {
-    icon: Leaf,
-    title: '零碳足跡',
-    description: '數碼化流程減少紙張浪費',
-  },
-];
+
 
 export default function ValueCards() {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -113,31 +97,7 @@ export default function ValueCards() {
           })}
         </div>
 
-        {/* Additional Features */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {additionalFeatures.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={feature.title}
-                className={`
-                  flex items-start gap-4 p-4 rounded-xl transition-all duration-300
-                  hover:bg-white hover:shadow-lg hover:shadow-gray-200/50
-                  ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}
-                style={{ transitionDelay: `${(features.length + index) * 100}ms` }}
-              >
-                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-gray-700" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-black mb-1">{feature.title}</h4>
-                  <p className="text-sm text-gray-500">{feature.description}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+
       </div>
     </section>
   );

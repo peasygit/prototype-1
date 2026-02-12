@@ -7,35 +7,35 @@ import { AnimatedButton, Card } from './ui';
 const steps = [
   {
     number: '01',
-    title: '描述需求',
-    description: '只需3分鐘填寫問卷，告訴我們您的家庭狀況和期望。',
+    title: 'Describe Needs',
+    description: 'Fill out a 3-min questionnaire about your household and expectations.',
     icon: ClipboardList,
     color: 'bg-red-600',
-    features: ['家庭人數', '照顧需求', '工作時間'],
+    features: ['Household Size', 'Care Needs', 'Work Schedule'],
   },
   {
     number: '02',
-    title: '我們篩選',
-    description: 'AI算法為您從數千名候選人中精選最合適的配對。',
+    title: 'We Screen',
+    description: 'AI selects the best matches from thousands of candidates.',
     icon: Search,
     color: 'bg-orange-500',
-    features: ['智能配對', '背景審查', '技能評估'],
+    features: ['Smart Matching', 'Background Check', 'Skill Assessment'],
   },
   {
     number: '03',
-    title: '面試',
-    description: '與推薦候選人會面，親身了解他們的專業和性格。',
+    title: 'Interview',
+    description: 'Meet candidates to understand their professionalism and personality.',
     icon: UserCheck,
     color: 'bg-amber-500',
-    features: ['線上面試', '實體會面', '試工期'],
+    features: ['Online Interview', 'In-person Meeting', 'Trial Period'],
   },
   {
     number: '04',
-    title: '支援',
-    description: '我們全程支援合約、簽證等入職手續。',
+    title: 'Support',
+    description: 'Full support for contracts, visas, and onboarding.',
     icon: FileCheck,
     color: 'bg-green-500',
-    features: ['合約草擬', '簽證申請', '入職培訓'],
+    features: ['Contract Drafting', 'Visa Application', 'Onboarding Training'],
   },
 ];
 
@@ -71,20 +71,20 @@ export default function ProcessSteps() {
           ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
         `}>
           <span className="inline-block px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
-            簡單四步
+            Simple 4 Steps
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-            運作方式
+            How It Works
           </h2>
           <p className="text-lg text-gray-600">
-            從需求到入職，我們讓整個過程變得簡單、透明
+            From needs to onboarding, we make the process simple and transparent.
           </p>
         </div>
 
         {/* Steps Timeline */}
         <div className="relative">
           {/* Connecting Line */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-red-200 via-orange-200 to-green-200" />
+          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-red-200 via-orange-200 to-green-200 -translate-y-1/2" />
 
           {/* Steps Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -146,12 +146,7 @@ export default function ProcessSteps() {
                     </div>
                   </Card>
 
-                  {/* Arrow for desktop */}
-                  {index < steps.length - 1 && (
-                    <div className="hidden lg:flex absolute -right-4 top-24 items-center justify-center w-8 h-8 z-10">
-                      <ArrowRight className="w-5 h-5 text-gray-300" />
-                    </div>
-                  )}
+
                 </div>
               );
             })}
@@ -164,7 +159,7 @@ export default function ProcessSteps() {
           ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
         `}>
           <AnimatedButton href="/employers/questionnaire" variant="primary" size="lg">
-            立即開始
+            Start Now
             <ArrowRight className="w-5 h-5 ml-2" />
           </AnimatedButton>
         </div>

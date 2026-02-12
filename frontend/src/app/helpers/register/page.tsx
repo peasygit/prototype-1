@@ -21,46 +21,46 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: '帳戶設定',
+    title: 'Account Settings',
     fields: [
-      { name: 'email', label: '電郵地址', type: 'email', placeholder: 'your@email.com' },
-      { name: 'password', label: '密碼', type: 'password', placeholder: '至少8位字元' },
-      { name: 'confirmPassword', label: '確認密碼', type: 'password', placeholder: '再次輸入密碼' },
+      { name: 'email', label: 'Email Address', type: 'email', placeholder: 'your@email.com' },
+      { name: 'password', label: 'Password', type: 'password', placeholder: 'At least 8 characters' },
+      { name: 'confirmPassword', label: 'Confirm Password', type: 'password', placeholder: 'Re-enter password' },
     ]
   },
   {
-    title: '個人資料',
+    title: 'Personal Information',
     fields: [
-      { name: 'name', label: '姓名', type: 'text', placeholder: '請輸入您的姓名' },
-      { name: 'birthDate', label: '出生日期', type: 'date' },
-      { name: 'nationality', label: '國籍', type: 'select', options: ['菲律賓', '印尼', '泰國', '印度', '其他'] },
-      { name: 'phone', label: '電話號碼', type: 'tel', placeholder: '+852 0000 0000' },
-      { name: 'currentLocation', label: '現時所在地', type: 'select', options: ['香港', '菲律賓', '印尼', '其他'] },
-      { name: 'contractStatus', label: '合約狀態', type: 'select', options: ['完約 (Finishing)', '斷約 (Terminated)', '轉工 (Transfer)', '海外 (Overseas)'] },
+      { name: 'name', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
+      { name: 'birthDate', label: 'Date of Birth', type: 'date' },
+      { name: 'nationality', label: 'Nationality', type: 'select', options: ['Philippines', 'Indonesia', 'Thailand', 'India', 'Other'] },
+      { name: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+852 0000 0000' },
+      { name: 'currentLocation', label: 'Current Location', type: 'select', options: ['Hong Kong', 'Philippines', 'Indonesia', 'Other'] },
+      { name: 'contractStatus', label: 'Contract Status', type: 'select', options: ['Finishing', 'Terminated', 'Transfer', 'Overseas'] },
     ]
   },
   {
-    title: '工作經驗',
+    title: 'Work Experience',
     fields: [
-      { name: 'experience', label: '工作經驗', type: 'select', options: ['少於1年', '1-3年', '3-5年', '5年以上'] },
-      { name: 'previousEmployers', label: '前僱主數量', type: 'number', placeholder: '0' },
-      { name: 'specialties', label: '專長 (可多選)', type: 'multiselect', options: ['嬰兒護理', '幼兒照顧', '長者護理', '寵物照顧', '煮食', '家務清潔', '駕駛'] },
+      { name: 'experience', label: 'Years of Experience', type: 'select', options: ['Less than 1 year', '1-3 years', '3-5 years', 'More than 5 years'] },
+      { name: 'previousEmployers', label: 'Number of Previous Employers', type: 'number', placeholder: '0' },
+      { name: 'specialties', label: 'Specialties (Select multiple)', type: 'multiselect', options: ['Infant Care', 'Child Care', 'Elderly Care', 'Pet Care', 'Cooking', 'Housekeeping', 'Driving'] },
     ]
   },
   {
-    title: '技能與語言',
+    title: 'Skills & Languages',
     fields: [
-      { name: 'languages', label: '會說語言 (可多選)', type: 'multiselect', options: ['廣東話', '普通話', '英文', '印尼話', '菲律賓話'] },
-      { name: 'cooking', label: '煮食能力', type: 'select', options: ['不會煮食', '簡單煮食', '一般家常菜', '擅長中菜', '擅長西餐', '擅長烘焙'] },
-      { name: 'driving', label: '是否會駕駛', type: 'select', options: ['不會', '會駕駛 (香港牌)', '會駕駛 (國際牌)'] },
+      { name: 'languages', label: 'Languages (Select multiple)', type: 'multiselect', options: ['Cantonese', 'Mandarin', 'English', 'Indonesian', 'Tagalog'] },
+      { name: 'cooking', label: 'Cooking Skills', type: 'select', options: ['No Cooking', 'Basic Cooking', 'Chinese Cuisine', 'Western Cuisine', 'Baking'] },
+      { name: 'driving', label: 'Driving Skills', type: 'select', options: ['No Driving', 'Hong Kong License', 'International License'] },
     ]
   },
   {
-    title: '其他資訊',
+    title: 'Other Information',
     fields: [
-      { name: 'availability', label: '可到職日期', type: 'date' },
-      { name: 'salary', label: '期望月薪 (HKD)', type: 'select', options: ['$4,630 (標準)', '$5,000-6,000', '$6,000-7,000', '$7,000-8,000', '$8,000以上'] },
-      { name: 'bio', label: '自我介紹', type: 'textarea', placeholder: '簡單介紹您的經驗和優點...' },
+      { name: 'availability', label: 'Earliest Start Date', type: 'date' },
+      { name: 'salary', label: 'Expected Salary (HKD)', type: 'select', options: ['$4,630 (Standard)', '$5,000-6,000', '$6,000-7,000', '$7,000-8,000', '$8,000+'] },
+      { name: 'bio', label: 'Self Introduction', type: 'textarea', placeholder: 'Briefly introduce yourself and your strengths...' },
     ]
   },
 ];
@@ -73,6 +73,7 @@ export default function HelperRegister() {
   const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false); // Add verification state
+  const [verificationCode, setVerificationCode] = useState('');
 
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -91,18 +92,18 @@ export default function HelperRegister() {
     const fields = steps[currentStep].fields;
     for (const field of fields) {
       if (!formData[field.name]) {
-        setError(`請填寫${field.label}`);
+        setError(`Please fill in ${field.label}`);
         return false;
       }
     }
     
     if (currentStep === 0) {
       if (formData.password !== formData.confirmPassword) {
-        setError('兩次輸入的密碼不一致');
+        setError('Passwords do not match');
         return false;
       }
       if (formData.password.length < 8) {
-        setError('密碼長度需至少8位字元');
+        setError('Password must be at least 8 characters');
         return false;
       }
     }
@@ -126,18 +127,18 @@ export default function HelperRegister() {
   };
 
   const convertContractStatus = (status: string) => {
-    if (status.includes('Finishing')) return 'finishing';
-    if (status.includes('Terminated')) return 'early_termination';
-    if (status.includes('Transfer')) return 'transfer';
-    if (status.includes('Overseas')) return 'overseas';
+    if (status === 'Finishing') return 'finishing';
+    if (status === 'Terminated') return 'early_termination';
+    if (status === 'Transfer') return 'transfer';
+    if (status === 'Overseas') return 'overseas';
     return 'finishing'; // Default
   };
 
   const convertExperience = (exp: string) => {
-    if (exp === '少於1年') return 0;
-    if (exp === '1-3年') return 2;
-    if (exp === '3-5年') return 4;
-    if (exp === '5年以上') return 6;
+    if (exp === 'Less than 1 year') return 0;
+    if (exp === '1-3 years') return 2;
+    if (exp === '3-5 years') return 4;
+    if (exp === 'More than 5 years') return 6;
     return 0;
   };
 
@@ -154,28 +155,58 @@ export default function HelperRegister() {
     setError('');
 
     try {
-      // 1. Register Account
-      const authData = await api.post<{ user: any; token: string; verificationRequired?: boolean }>('/auth/register', {
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        role: 'helper'
-      });
+      let token = localStorage.getItem('token');
 
-      // If verification is required, stop here and show verification UI
-      if (authData.verificationRequired) {
-        setVerificationPending(true);
-        if (authData.token) {
-          localStorage.setItem('token', authData.token);
-          localStorage.setItem('user', JSON.stringify(authData.user));
+      // 1. Register Account if no token
+      if (!token) {
+        const authData = await api.post<{ user: any; token: string; requireEmailVerification?: boolean }>('/auth/register', {
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          role: 'helper'
+        });
+
+        // If verification is required, stop here and show verification UI
+        if (authData.requireEmailVerification || (authData as any).verificationRequired) {
+          setVerificationPending(true);
+          if (authData.token) {
+            localStorage.setItem('token', authData.token);
+            localStorage.setItem('user', JSON.stringify(authData.user));
+          }
+          setIsSubmitting(false);
+          return;
         }
-        setIsSubmitting(false);
-        return;
+
+        // Save token
+        token = authData.token;
+        localStorage.setItem('token', authData.token);
+        localStorage.setItem('user', JSON.stringify(authData.user));
       }
 
-      // Save token
-      localStorage.setItem('token', authData.token);
-      localStorage.setItem('user', JSON.stringify(authData.user));
+      // Transform skills and experience
+      const skills = [];
+      const specialties = formData.specialties || [];
+      const yearsExp = convertExperience(formData.experience);
+      
+      if (specialties.includes('Housekeeping')) skills.push({ skillType: 'housework', proficiencyLevel: 'good' });
+      
+      // Cooking
+      if (specialties.includes('Cooking') || (formData.cooking && formData.cooking !== 'No Cooking')) {
+         const isBasic = formData.cooking === 'Basic Cooking';
+         skills.push({ skillType: 'cooking', proficiencyLevel: isBasic ? 'basic' : 'good' });
+      }
+      
+      // Driving
+      if (specialties.includes('Driving') || (formData.driving && formData.driving !== 'No Driving')) {
+         skills.push({ skillType: 'driving', proficiencyLevel: 'good' });
+      }
+
+      // Care Experience
+      const careExperience = [];
+      if (specialties.includes('Infant Care')) careExperience.push({ targetType: 'infant', yearsExperience: yearsExp });
+      if (specialties.includes('Child Care')) careExperience.push({ targetType: 'child', yearsExperience: yearsExp });
+      if (specialties.includes('Elderly Care')) careExperience.push({ targetType: 'elderly', yearsExperience: yearsExp });
+      if (specialties.includes('Pet Care')) careExperience.push({ targetType: 'pet', yearsExperience: yearsExp });
 
       // 2. Create Profile
       const profileData = {
@@ -191,17 +222,18 @@ export default function HelperRegister() {
         languages: formData.languages,
         aboutMe: formData.bio,
         expectedSalaryMin: convertSalary(formData.salary),
-        // Add other mappings as needed
+        skills,
+        careExperience,
       };
 
       await api.post('/helpers/profile', profileData, {
-        headers: { Authorization: `Bearer ${authData.token}` } // Explicitly pass token just in case
+        headers: { Authorization: `Bearer ${token}` } // Explicitly pass token just in case
       });
 
       setIsComplete(true);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || '註冊失敗，請稍後再試');
+      setError(err.message || 'Registration failed, please try again later');
     } finally {
       setIsSubmitting(false);
     }
@@ -209,6 +241,33 @@ export default function HelperRegister() {
 
   const handleVerificationComplete = async () => {
     // When user says they are verified, we try to proceed with profile creation
+    if (verificationCode) {
+         setIsSubmitting(true);
+         try {
+             const data = await api.post<{ user: any; token: string }>('/auth/verify', {
+                email: formData.email,
+                token: verificationCode,
+                role: 'helper',
+                phone: formData.phone
+             });
+             
+             localStorage.setItem('token', data.token);
+             localStorage.setItem('user', JSON.stringify(data.user));
+             
+             setVerificationPending(false);
+             
+             // Continue with profile creation by calling handleSubmit again
+             // Since token is now in localStorage, it will skip registration
+             await handleSubmit();
+         } catch (err: any) {
+             console.error(err);
+             // Keep verification pending state
+             setError(err.message || 'Verification failed, please check your code');
+             setIsSubmitting(false);
+         }
+         return;
+    }
+
     setIsSubmitting(true);
     setVerificationPending(false);
     await handleSubmit();
@@ -230,20 +289,31 @@ export default function HelperRegister() {
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <div className="text-4xl">✉️</div>
             </div>
-            <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
+            <h1 className="text-3xl font-semibold text-black mb-4">Please Verify Your Email</h1>
             <p className="text-gray-600 mb-8 leading-relaxed">
-              我們已發送一封驗證信至 <strong>{formData.email}</strong>。<br/>
-              請點擊信中的連結以啟用您的帳戶。
+              We have sent a verification code to <strong>{formData.email}</strong>.<br/>
+              Please enter the code or click the link in the email.
             </p>
+            
+            <div className="mb-6 max-w-xs mx-auto">
+                <input
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent text-center text-lg tracking-widest"
+                />
+            </div>
+
             <div className="space-y-3">
               <button
                 onClick={handleVerificationComplete}
                 className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto"
               >
-                我已完成驗證，繼續
+                I have verified, continue
               </button>
               <div className="mt-4">
-                 <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
+                 <button className="text-gray-500 text-sm hover:underline">Didn't receive email? Resend</button>
               </div>
             </div>
           </div>
@@ -268,20 +338,20 @@ export default function HelperRegister() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Check className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-semibold text-black mb-4">註冊成功！</h1>
+            <h1 className="text-3xl font-semibold text-black mb-4">Registration Successful!</h1>
             <p className="text-gray-600 mb-8 leading-relaxed">
-              歡迎加入 Peasy！我們會審核您的資料，並在24小時內通過電郵告知結果。
+              Welcome to Peasy! We will review your information and notify you via email within 24 hours.
             </p>
             <div className="space-y-3">
               <Link
                 href="/helpers/dashboard"
                 className="inline-flex items-center justify-center h-14 px-8 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-full transition-all"
               >
-                前往 Dashboard
+                Go to Dashboard
               </Link>
               <div>
                 <Link href="/" className="text-gray-600 hover:text-black underline">
-                  返回首頁
+                  Back to Home
                 </Link>
               </div>
             </div>
@@ -300,19 +370,19 @@ export default function HelperRegister() {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-            <Link href="/" className="text-gray-600 hover:text-black font-medium">返回首頁</Link>
+            <Link href="/" className="text-gray-600 hover:text-black font-medium">Back to Home</Link>
           </div>
         </div>
       </header>
 
       <main className="py-12 px-6">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-semibold text-black mb-2">註冊成為家庭幫手</h1>
-          <p className="text-gray-600 mb-8">免費註冊，直通優質僱主</p>
+          <h1 className="text-3xl font-semibold text-black mb-2">Register as a Helper</h1>
+          <p className="text-gray-600 mb-8">Free registration, connect with quality employers</p>
           
           <div className="mb-8">
             <div className="flex justify-between text-sm font-medium mb-2">
-              <span className="text-black">步驟 {currentStep + 1} / {steps.length}</span>
+              <span className="text-black">Step {currentStep + 1} / {steps.length}</span>
               <span className="text-gray-600">{currentStepData.title}</span>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -373,7 +443,7 @@ export default function HelperRegister() {
                       onChange={(e) => handleInputChange(field.name, e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-gray-200 rounded-lg focus:border-red-600 focus:outline-none"
                     >
-                      <option value="">請選擇...</option>
+                      <option value="">Select...</option>
                       {field.options?.map((option) => (
                         <option key={option} value={option}>{option}</option>
                       ))}
@@ -410,29 +480,34 @@ export default function HelperRegister() {
             </div>
           </div>
 
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between pt-6">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="inline-flex items-center gap-2 h-12 px-6 bg-transparent border-2 border-gray-200 hover:border-gray-800 text-black font-semibold rounded-full transition-all disabled:opacity-50"
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${
+                currentStep === 0
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-black'
+              }`}
             >
-              <ChevronLeft className="w-5 h-5" />上一步
+              <ChevronLeft className="w-5 h-5" />Previous
             </button>
-            
+
             {currentStep === steps.length - 1 ? (
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center h-12 px-8 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? '提交中...' : '完成註冊'}
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                {isSubmitting ? 'Submitting...' : 'Complete Registration'}
               </button>
             ) : (
               <button
                 onClick={handleNext}
-                className="inline-flex items-center gap-2 h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all"
+                className="flex items-center gap-2 px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full font-medium transition-all"
               >
-                下一步<ChevronRight className="w-5 h-5" />
+                Next<ChevronRight className="w-5 h-5" />
               </button>
             )}
           </div>

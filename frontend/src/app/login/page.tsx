@@ -23,13 +23,13 @@ export default function Login() {
     setError('');
 
     try {
-      const data = await api.post<{ user: any; token: string; verificationRequired?: boolean }>('/auth/login', {
+      const data = await api.post<{ user: any; token: string; requireEmailVerification?: boolean }>('/auth/login', {
         email,
         password,
       });
 
       // Handle verification required (from Login flow)
-      if (data.verificationRequired) {
+      if (data.requireEmailVerification) {
           setVerificationPending(true);
           // Still store token if available (DEV_TOKEN) to allow proceeding
           if (data.token) {
@@ -75,50 +75,60 @@ export default function Login() {
           return;
       }
       
-      setError(err.message || '登入失敗，請檢查您的資料');
+      setError(err.message || 'Login failed, please check your credentials');
+      
+      // Specific help for "Invalid credentials"
+      if (err.message === 'Invalid credentials') {
+         if (email.includes('example.com') || email.includes('peasy.com')) {
+             setError('Invalid credentials. Note: Seed accounts (example.com) may not exist in the Auth system. Please register a new account.');
+         } else {
+             setError('Invalid email or password. Please double-check your credentials.');
+         }
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerificationComplete = async () => {
-     // If user entered a code, try to verify with it
-     if (verificationCode) {
-         setIsLoading(true);
-         try {
-             const data = await api.post<{ user: any; token: string }>('/auth/verify', {
-                email,
-                token: verificationCode
-             });
-             
-             localStorage.setItem('token', data.token);
-             localStorage.setItem('user', JSON.stringify(data.user));
-             
-             // Check if user role matches selected type
-             if (data.user.role !== userType) {
-                // Adjust redirect if needed, or just warn
-             }
+    // If user entered a code, try to verify with it
+    if (verificationCode) {
+        setIsLoading(true);
+        try {
+            const data = await api.post<{ user: any; token: string }>('/auth/verify', {
+               email,
+               token: verificationCode,
+               role: userType // Pass selected role as fallback
+            });
+            
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            // Check if user role matches selected type
+            if (data.user.role !== userType) {
+               // Adjust redirect if needed, or just warn
+            }
 
-             const redirectUrl = data.user.role === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
-             router.push(redirectUrl);
-         } catch (err: any) {
-             console.error(err);
-             alert(err.message || '驗證失敗，請檢查驗證碼');
-             setIsLoading(false);
-         }
-         return;
-     }
-
-     // User claims verification complete (link click), proceed to dashboard
-     // IMPORTANT: We must ensure token is present, otherwise Dashboard will redirect back to login
-     const token = localStorage.getItem('token');
-     
-     if (!token) {
-        // This shouldn't happen if backend sent DEV_TOKEN, but if it does:
-        setError('無法驗證身份，請重新登入');
-        setVerificationPending(false);
+            const redirectUrl = data.user.role === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
+            router.push(redirectUrl);
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message || 'Verification failed, please check the code');
+            setIsLoading(false);
+        }
         return;
-     }
+    }
+
+    // User claims verification complete (link click), proceed to dashboard
+    // IMPORTANT: We must ensure token is present, otherwise Dashboard will redirect back to login
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+       // This shouldn't happen if backend sent DEV_TOKEN, but if it does:
+       setError('Cannot verify identity, please login again');
+       setVerificationPending(false);
+       return;
+    }
 
      const redirectUrl = userType === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
      router.push(redirectUrl);
@@ -140,11 +150,11 @@ export default function Login() {
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <div className="text-4xl">✉️</div>
             </div>
-            <h1 className="text-3xl font-semibold text-black mb-4">請驗證您的電郵地址</h1>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              您的帳戶需要驗證電郵才能繼續。<br/>
-              我們已發送一封包含驗證碼的信件至 <strong>{email}</strong>。<br/>
-              請輸入驗證碼，或點擊信中的連結。
+            <h1 className="text-3xl font-semibold text-black mb-4">Verify Your Email</h1>
+            <p className="text-gray-600 mb-6">
+              Your account requires email verification to continue.<br/>
+              We have sent a verification code to <strong>{email}</strong>.<br/>
+              Please enter the code below or click the link in the email.
             </p>
             
             <div className="mb-6 max-w-xs mx-auto">
@@ -152,7 +162,8 @@ export default function Login() {
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="輸入 6 位數驗證碼"
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg tracking-widest"
                 />
             </div>
@@ -163,10 +174,10 @@ export default function Login() {
                 disabled={isLoading}
                 className="inline-flex items-center justify-center h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-full transition-all w-full sm:w-auto disabled:opacity-50"
               >
-                {isLoading ? '驗證中...' : '驗證並進入系統'}
+                {isLoading ? 'Verifying...' : 'Verify & Continue'}
               </button>
               <div className="mt-4">
-                 <button className="text-gray-500 text-sm hover:underline">沒收到郵件？重新發送</button>
+                 <button className="text-gray-500 text-sm hover:underline">Resend Email</button>
               </div>
             </div>
           </div>
@@ -182,7 +193,7 @@ export default function Login() {
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
             <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-black font-medium">
-              <ChevronLeft className="w-4 h-4" />返回首頁
+              <ChevronLeft className="w-4 h-4" />Back to Home
             </Link>
           </div>
         </div>
@@ -191,8 +202,8 @@ export default function Login() {
       <main className="py-16 px-6">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-semibold text-black mb-3">登入</h1>
-            <p className="text-gray-600">歡迎回來，請選擇您的身份</p>
+            <h1 className="text-3xl font-semibold text-black mb-3">Login</h1>
+            <p className="text-gray-600">Welcome back, please select your role</p>
           </div>
 
           {/* User Type Toggle */}
@@ -205,7 +216,7 @@ export default function Login() {
                   : 'text-gray-600 hover:text-black'
               }`}
             >
-              我是僱主
+              I am an Employer
             </button>
             <button
               onClick={() => setUserType('helper')}
@@ -215,7 +226,7 @@ export default function Login() {
                   : 'text-gray-600 hover:text-black'
               }`}
             >
-              我是幫手
+              I am a Helper
             </button>
           </div>
 
@@ -228,7 +239,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-black mb-2">
-                Email / 電郵地址
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -236,7 +247,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="name@example.com"
                   className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-xl focus:border-red-600 focus:outline-none transition-colors"
                   required
                 />
@@ -245,8 +256,8 @@ export default function Login() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-black">密碼</label>
-                <Link href="#" className="text-sm text-red-600 hover:text-red-700">忘記密碼？</Link>
+                <label className="block text-sm font-medium text-black">Password</label>
+                <Link href="/forgot-password" className="text-sm text-red-600 hover:text-red-700">Forgot Password?</Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -254,7 +265,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="輸入密碼"
+                  placeholder="Enter password"
                   className="w-full h-14 pl-12 pr-12 bg-white border border-gray-200 rounded-xl focus:border-red-600 focus:outline-none transition-colors"
                   required
                 />
@@ -276,20 +287,20 @@ export default function Login() {
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  登入中...
+                  Logging in...
                 </>
               ) : (
-                '登入'
+                'Login'
               )}
             </button>
 
             <div className="text-center">
-              <span className="text-gray-600 text-sm">還沒有帳號？</span>
+              <span className="text-gray-600 text-sm">Don't have an account?</span>
               <Link 
-                href={userType === 'employer' ? '/employers/register' : '/helpers/register'} 
+                href={userType === 'employer' ? '/employers/questionnaire' : '/helpers/register'} 
                 className="text-red-600 font-medium text-sm hover:underline ml-1"
               >
-                立即註冊
+                Register Now
               </Link>
             </div>
           </form>

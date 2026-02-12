@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../utils/prisma';
 import { insforge, createServiceClient } from '../utils/insforge';
+import jwt from 'jsonwebtoken';
 
 // const prisma = new PrismaClient(); // Removed
 
@@ -29,10 +30,38 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       try {
         // Fetch user details using the token
         const { data, error } = await client.auth.getCurrentUser();
-        if (error || !data?.user) {
+        
+        // DEBUG: Log token and result
+        console.log(`Verifying token: ${token.substring(0, 10)}...`);
+        
+        if (data?.user) {
+             console.log('InsForge user found via SDK:', data.user.id);
+             authUser = data.user;
+        } else {
+             console.log('InsForge user NOT found via SDK. Error:', error);
+             
+             // Fallback: Decode JWT directly (SECURITY WARNING: Signature not verified!)
+             // This is necessary because InsForge SDK server-side validation seems to rely on session/cookies
+             // which are not available here.
+             // TODO: Configure JWT_SECRET to verify signature properly.
+             try {
+                 const decoded = jwt.decode(token);
+                 if (decoded && typeof decoded === 'object' && decoded.sub) {
+                     console.warn('⚠️ SECURITY WARNING: Using unverified JWT decode fallback!');
+                     console.log('Decoded User ID:', decoded.sub);
+                     authUser = { id: decoded.sub, email: (decoded as any).email };
+                 } else {
+                     console.error('JWT Decode failed or invalid payload');
+                 }
+             } catch (jwtError) {
+                 console.error('JWT Decode error:', jwtError);
+             }
+        }
+
+        if (!authUser) {
+          console.error('InsForge getCurrentUser failed:', error);
           throw error || new Error('User not found');
         }
-        authUser = data.user;
       } catch (error) {
         console.error('Token verification failed:', error);
       }

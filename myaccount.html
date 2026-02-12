@@ -1,0 +1,417 @@
+<html lang="en" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Peasy - Contract Management</title>
+    <style vid="5">
+        :root {
+            --primary: #DB0011;
+            --primary-hover: #B2000E;
+            --bg-body: #0D0D0D; 
+            --bg-app: #FFFFFF;
+            --bg-surface: #F5F6FC; 
+            --bg-surface-hover: #EBEFF8;
+            --text-main: #000000; 
+            --text-secondary: #6E727D; 
+            --text-tertiary: #989CA5;
+            --border-subtle: #EDEEF2;
+            --status-success: #10B981;
+            --status-warning: #F59E0B;
+            --status-error: #EF4444;
+            --radius-lg: 24px; 
+            --radius-md: 16px; 
+            --radius-sm: 12px; 
+            --radius-pill: 999px;
+            --space-xs: 8px;
+            --space-sm: 12px;
+            --space-md: 20px;
+            --space-lg: 32px;
+            --space-xl: 48px;
+            --space-2xl: 80px;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-weight-regular: 400;
+            --font-weight-medium: 500;
+            --font-weight-bold: 600;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+        }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-sm { gap: var(--space-sm); }
+        .gap-md { gap: var(--space-md); }
+        .gap-lg { gap: var(--space-lg); }
+
+        .text-h2 {
+            font-size: 32px;
+            font-weight: var(--font-weight-bold);
+            letter-spacing: -0.01em;
+        }
+
+        .text-h3 {
+            font-size: 20px;
+            font-weight: var(--font-weight-bold);
+        }
+
+        .text-body {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .text-small {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .text-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-weight: var(--font-weight-bold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header {
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 24px;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            margin-left: var(--space-lg);
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: var(--space-xl);
+            padding: var(--space-xl) 0;
+            min-height: 100vh;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .sidebar-item {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+        }
+        
+        .sidebar-item.active {
+            background: var(--bg-surface);
+            color: var(--primary);
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .alert-banner {
+            background: #FEF2F2;
+            border: 1px solid #FEE2E2;
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .alert-icon {
+            color: var(--primary);
+        }
+
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-lg);
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 0.5fr;
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            align-items: center;
+        }
+
+        .table-header {
+            border-bottom: 2px solid var(--border-subtle);
+            padding-bottom: var(--space-sm);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .badge-pill {
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: var(--font-weight-bold);
+        }
+
+        .badge-success { background: #ECFDF5; color: #059669; }
+        .badge-warning { background: #FFFBEB; color: #D97706; }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: var(--radius-pill);
+            border: none;
+            font-weight: var(--font-weight-bold);
+            cursor: pointer;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            padding: var(--space-sm);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-sm);
+            gap: var(--space-sm);
+        }
+
+        .icon-file {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-surface);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body vid="6">
+
+    <header class="header" vid="7">
+        <div class="container flex justify-between items-center" vid="8">
+            <div class="nav-logo" vid="9">Peasy</div>
+            <nav class="flex" vid="10">
+                <a href="#" class="nav-link" vid="11">Find Helpers</a>
+                <a href="#" class="nav-link" vid="12">For Helpers</a>
+                <a href="#" class="nav-link" vid="13">Process</a>
+                <a href="#" class="nav-link" style="color: var(--primary)" vid="14">My Account</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container dashboard-layout" vid="15">
+        
+        <aside class="sidebar-nav" vid="16">
+            <div class="sidebar-item" vid="17">Matches</div>
+            <div class="sidebar-item" vid="18">Shortlist</div>
+            <div class="sidebar-item" vid="19">Interviews</div>
+            <div class="sidebar-item active" vid="20">Contracts &amp; HR</div>
+            <div style="height: 1px; background: #E5E7EB; margin: 12px 0;" vid="21"></div>
+            <div class="sidebar-item" vid="22">Payroll Settings</div>
+            <div class="sidebar-item" vid="23">Support</div>
+        </aside>
+
+        <section class="content" vid="24">
+            <div class="flex justify-between items-center" style="margin-bottom: var(--space-lg);" vid="25">
+                <h2 class="text-h2" vid="26">Contract Management</h2>
+                <button class="btn-primary" vid="27">+ New Contract</button>
+            </div>
+
+            
+            <div class="alert-banner" vid="28">
+                <div class="alert-icon" vid="29">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="30"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01" vid="31"></path></svg>
+                </div>
+                <div vid="32">
+                    <p class="text-h3" style="font-size: 16px; margin-bottom: 2px;" vid="33">Action Required: Visa Renewal</p>
+                    <p class="text-small" vid="34">Maria S.'s work permit expires in 45 days. Start the renewal process to avoid compliance gaps.</p>
+                </div>
+                <button class="btn-primary" style="margin-left: auto; height: 36px; padding: 0 16px; font-size: 14px;" vid="35">Renew Now</button>
+            </div>
+
+            <div class="grid-dashboard" vid="36">
+                
+                <div class="flex-col" vid="37">
+                    <div class="card" vid="38">
+                        <h3 class="text-h3" style="margin-bottom: var(--space-md);" vid="39">Active Contracts</h3>
+                        
+                        <div class="table-row table-header" vid="40">
+                            <span class="text-label" vid="41">Helper</span>
+                            <span class="text-label" vid="42">Payroll Status</span>
+                            <span class="text-label" vid="43">Visa / Permit</span>
+                            <span class="text-label" vid="44"></span>
+                        </div>
+
+                        <div class="table-row" vid="45">
+                            <div class="flex items-center gap-sm" vid="46">
+                                <div style="width: 32px; height: 32px; background: #F3F4F6; border-radius: 50%;" vid="47"></div>
+                                <div vid="48">
+                                    <p class="text-small" style="color: var(--text-main); font-weight: 600;" vid="49">Maria Santos</p>
+                                    <p class="text-label" style="font-size: 10px;" vid="50">ID: PEA-2023-042</p>
+                                </div>
+                            </div>
+                            <div vid="51">
+                                <span class="badge-pill badge-success" vid="52">Paid Oct</span>
+                            </div>
+                            <div vid="53">
+                                <p class="text-small" style="color: var(--primary);" vid="54">Expires Dec 15</p>
+                            </div>
+                            <div class="flex justify-end" vid="55">
+                                <button class="btn-icon" vid="56">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="57"><circle cx="12" cy="12" r="1" vid="58"></circle><circle cx="19" cy="12" r="1" vid="59"></circle><circle cx="5" cy="12" r="1" vid="60"></circle></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-row" vid="61">
+                            <div class="flex items-center gap-sm" vid="62">
+                                <div style="width: 32px; height: 32px; background: #F3F4F6; border-radius: 50%;" vid="63"></div>
+                                <div vid="64">
+                                    <p class="text-small" style="color: var(--text-main); font-weight: 600;" vid="65">Elena Ramos</p>
+                                    <p class="text-label" style="font-size: 10px;" vid="66">ID: PEA-2023-118</p>
+                                </div>
+                            </div>
+                            <div vid="67">
+                                <span class="badge-pill badge-warning" vid="68">Processing</span>
+                            </div>
+                            <div vid="69">
+                                <p class="text-small" style="color: var(--status-success);" vid="70">Valid til Jun 24</p>
+                            </div>
+                            <div class="flex justify-end" vid="71">
+                                <button class="btn-icon" vid="72">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="73"><circle cx="12" cy="12" r="1" vid="74"></circle><circle cx="19" cy="12" r="1" vid="75"></circle><circle cx="5" cy="12" r="1" vid="76"></circle></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" vid="77">
+                        <div class="flex justify-between items-center" style="margin-bottom: var(--space-md);" vid="78">
+                            <h3 class="text-h3" vid="79">Recent Payroll History</h3>
+                            <a href="#" class="text-small" style="color: var(--primary); text-decoration: none;" vid="80">View All</a>
+                        </div>
+                        <div class="table-row" style="border-bottom: none;" vid="81">
+                            <div vid="82">
+                                <p class="text-small" style="color: var(--text-main);" vid="83">October 2023 Payroll</p>
+                                <p class="text-label" vid="84">Batch processed Oct 28</p>
+                            </div>
+                            <div vid="85"><p class="text-small" vid="86">$3,240.00</p></div>
+                            <div vid="87"><span class="badge-pill badge-success" vid="88">Disbursed</span></div>
+                            <div class="flex justify-end" vid="89">
+                                <button class="btn-icon" vid="90">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="91"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" vid="92"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="flex-col" vid="93">
+                    <div class="card" vid="94">
+                        <h3 class="text-h3" style="margin-bottom: var(--space-md);" vid="95">Document Vault</h3>
+                        <p class="text-label" style="margin-bottom: var(--space-sm);" vid="96">Legal &amp; Compliance</p>
+                        
+                        <div class="doc-item" vid="97">
+                            <div class="icon-file" vid="98">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="99"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" vid="100"></path><path d="M14 2v6h6" vid="101"></path></svg>
+                            </div>
+                            <div style="flex: 1;" vid="102">
+                                <p class="text-small" style="color: var(--text-main); line-height: 1.2;" vid="103">Standard Employment Contract</p>
+                                <p class="text-label" style="font-size: 10px;" vid="104">PDF • 1.2 MB</p>
+                            </div>
+                        </div>
+
+                        <div class="doc-item" vid="105">
+                            <div class="icon-file" vid="106">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" vid="107"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" vid="108"></path><path d="M14 2v6h6" vid="109"></path></svg>
+                            </div>
+                            <div style="flex: 1;" vid="110">
+                                <p class="text-small" style="color: var(--text-main); line-height: 1.2;" vid="111">Employer Insurance Policy</p>
+                                <p class="text-label" style="font-size: 10px;" vid="112">PDF • 840 KB</p>
+                            </div>
+                        </div>
+
+                        <div class="doc-item" style="border-style: dashed; background: var(--bg-surface); cursor: pointer; justify-content: center; padding: var(--space-md);" vid="113">
+                            <p class="text-small" style="color: var(--primary); font-weight: 600;" vid="114">+ Upload Document</p>
+                        </div>
+                    </div>
+
+                    <div class="card" style="background: var(--bg-surface); border: none;" vid="115">
+                        <h3 class="text-h3" style="margin-bottom: var(--space-sm);" vid="116">Compliance Score</h3>
+                        <div class="flex items-center gap-md" vid="117">
+                            <div style="font-size: 40px; font-weight: 800; color: var(--text-main);" vid="118">92<span style="font-size: 20px; font-weight: 400; color: var(--text-secondary);" vid="119">/100</span></div>
+                            <div style="flex: 1; height: 8px; background: #E5E7EB; border-radius: 4px; position: relative;" vid="120">
+                                <div style="position: absolute; left: 0; top: 0; height: 100%; width: 92%; background: var(--status-success); border-radius: 4px;" vid="121"></div>
+                            </div>
+                        </div>
+                        <p class="text-small" style="margin-top: var(--space-sm);" vid="122">Your household is fully compliant. No immediate risks detected.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body></html>

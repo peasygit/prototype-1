@@ -7,9 +7,9 @@ import { AnimatedButton } from './ui';
 
 // Stats data
 const stats = [
-  { value: '2,500+', label: '成功配對' },
-  { value: '98%', label: '滿意度' },
-  { value: '0', label: '外傭費用' },
+  { value: '2,500+', label: 'Successful Matches' },
+  { value: '98%', label: 'Satisfaction Rate' },
+  { value: '0', label: 'Helper Fees' },
 ];
 
 export default function Hero() {
@@ -38,53 +38,53 @@ export default function Hero() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-full">
               <Sparkles className="w-4 h-4 text-red-600" />
-              <span className="text-sm font-medium text-red-700">Peasy v2.0 全新上線</span>
+              <span className="text-sm font-medium text-red-700">Peasy v2.0 is Live</span>
             </div>
 
             {/* Main Headline */}
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight text-black">
-                你的家庭
+                Your Family's
                 <br />
                 <span className="relative">
-                  <span className="gradient-text">人力資源顧問</span>
+                  <span className="gradient-text">HR Consultant</span>
                   <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
                     <path d="M0 8C50 8 50 2 100 2C150 2 150 8 200 8" stroke="#DB0011" strokeWidth="3" strokeLinecap="round" className="opacity-30"/>
                   </svg>
                 </span>
               </h1>
               <p className="text-2xl md:text-3xl font-light text-gray-700">
-                照顧「人」與「家」
+                Caring for People and Home
               </p>
             </div>
 
             {/* Description */}
             <p className="text-lg text-gray-600 max-w-lg leading-relaxed">
-              公平配對、完整人力資源支援、外傭零費用。
+              Fair matching, complete HR support, zero helper fees.
               <br />
-              以專業方式管理家庭聘僱。
+              Professional management of domestic employment.
             </p>
 
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
                 <Shield className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-700">背景已認證</span>
+                <span className="text-sm font-medium text-green-700">Background Verified</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full">
                 <Clock className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">24小時配對</span>
+                <span className="text-sm font-medium text-blue-700">24h Matching</span>
               </div>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4">
               <AnimatedButton href="/employers/questionnaire" variant="primary" size="lg">
-                開始 3 分鐘問卷
+                Start 3-min Questionnaire
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </AnimatedButton>
               <AnimatedButton href="#process" variant="outline" size="lg">
-                了解運作方式
+                How it Works
               </AnimatedButton>
             </div>
 
@@ -128,7 +128,7 @@ export default function Hero() {
                     </div>
                     <div>
                       <div className="font-semibold text-black">Maria Santos</div>
-                      <div className="text-sm text-gray-500">嬰兒護理專家 · 5年經驗</div>
+                      <div className="text-sm text-gray-500">Infant Care Expert · 5 Years Exp</div>
                     </div>
                     <div className="ml-auto">
                       <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -139,7 +139,7 @@ export default function Hero() {
 
                   {/* Skills */}
                   <div className="flex gap-2">
-                    {['嬰兒護理', '煮食', '家務'].map((skill) => (
+                    {['Infant Care', 'Cooking', 'Housework'].map((skill) => (
                       <span key={skill} className="px-3 py-1 bg-red-50 text-red-700 text-sm rounded-full">
                         {skill}
                       </span>
@@ -150,7 +150,7 @@ export default function Hero() {
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">廣東話</span>
+                        <span className="text-gray-600">Cantonese</span>
                         <span className="text-gray-800">85%</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -159,7 +159,7 @@ export default function Hero() {
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">英文</span>
+                        <span className="text-gray-600">English</span>
                         <span className="text-gray-800">75%</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -177,8 +177,8 @@ export default function Hero() {
                     <Sparkles className="w-4 h-4 text-green-600" />
                   </div>
                   <div className="text-sm">
-                    <div className="font-semibold text-black">配對成功</div>
-                    <div className="text-gray-500 text-xs">3分鐘前</div>
+                    <div className="font-semibold text-black">Matched Successfully</div>
+                    <div className="text-gray-500 text-xs">3 mins ago</div>
                   </div>
                 </div>
               </div>

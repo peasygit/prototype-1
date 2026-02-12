@@ -1,7 +1,8 @@
 import { Router, Request } from 'express';
 import { prisma } from '../utils/prisma';
-import { insforge } from '../utils/insforge';
+import { insforge, createServiceClient } from '../utils/insforge';
 import { authenticate } from '../middleware/auth';
+import { UserRole } from '@prisma/client';
 
 const router = Router();
 
@@ -25,10 +26,20 @@ router.post('/register', async (req, res) => {
     }
 
     // 1. Create user in InsForge Auth
-    const { data: authData, error: authError } = await insforge.auth.signUp({
+    const response = await insforge.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          role,
+          phone,
+        }
+      } as any
     });
+    
+    console.log('SignUp Response:', JSON.stringify(response, null, 2));
+
+    const { data: authData, error: authError } = response;
 
     if (authError) {
       console.error('InsForge Auth Error:', authError);
@@ -48,6 +59,14 @@ router.post('/register', async (req, res) => {
       }
 
       return res.status(400).json({ error: authError.message });
+    }
+
+    // Handle case where user is created but verification is required (InsForge doesn't return user object)
+    if (authData?.requireEmailVerification && !authData.user) {
+        return res.status(200).json({
+            message: 'Verification email sent',
+            requireEmailVerification: true
+        });
     }
 
     if (!authData || !authData.user) {
@@ -91,6 +110,57 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Forgot Password
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const { error } = await insforge.auth.sendResetPasswordEmail(email);
+
+    if (error) {
+      console.error('Forgot password error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to send reset email' });
+  }
+});
+
+// Reset Password (Update)
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { password, accessToken } = req.body;
+
+    if (!password || !accessToken) {
+      return res.status(400).json({ error: 'Password and access token required' });
+    }
+
+    // Create a client with the user's access token
+    const client = createServiceClient(accessToken);
+    
+    const { error } = await (client.auth as any).updateUser({
+      password: password
+    });
+
+    if (error) {
+      console.error('Reset password error:', error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 // Login
 router.post('/login', async (req, res) => {
   try {
@@ -114,32 +184,15 @@ router.post('/login', async (req, res) => {
       const isVerificationError = 
         errorMessage.includes('email verification') || 
         errorMessage.includes('email not confirmed') ||
-        errorMessage.includes('email not verified') ||
-        errorMessage.includes('invalid login credentials'); // Sometimes generic error is returned for unverified emails
-
+        errorMessage.includes('email not verified');
+      
       console.log(`Login error: ${authError.message}, treating as verification error: ${isVerificationError}`);
 
       if (isVerificationError) {
-         // Try to find user in DB to see if they exist but might be unverified
-         const user = await prisma.user.findUnique({ where: { email } });
-         
-         if (user) {
-             console.log(`User found in DB: ${user.id}, returning DEV_TOKEN`);
-             // In dev mode, we assume they are unverified if login failed but user exists
-             // And we allow them to proceed via the verification screen flow
              return res.status(200).json({
-                user: {
-                  id: user.id,
-                  email: user.email,
-                  role: user.role,
-                  status: user.status,
-                },
-                token: `DEV_TOKEN_${user.id}`,
-                verificationRequired: true
+                message: 'Verification required',
+                requireEmailVerification: true
              });
-         } else {
-             console.log('User NOT found in DB despite verification error');
-         }
       }
       return res.status(401).json({ error: authError.message });
     }
@@ -149,13 +202,35 @@ router.post('/login', async (req, res) => {
     }
 
     // 2. Get user profile from our database
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: authData.user.id },
     });
 
     if (!user) {
-      // Handle case where user exists in Auth but not in DB (shouldn't happen if flow is correct)
-      return res.status(404).json({ error: 'User profile not found' });
+        // Try to recover if missing in DB but exists in Auth (Zombie User)
+        const metadata = authData.user.metadata as Record<string, any> || {};
+        const userRole = metadata.role;
+        const userPhone = metadata.phone;
+
+        if (userRole) {
+            console.log(`Recovering missing Prisma profile for user ${authData.user.id}`);
+            user = await prisma.user.create({
+                data: {
+                    id: authData.user.id,
+                    email: authData.user.email!,
+                    role: userRole as UserRole,
+                    phone: userPhone || '',
+                    passwordHash: 'managed_by_insforge',
+                    status: 'active'
+                }
+            });
+            
+            if (userRole === 'employer') {
+                 await prisma.employer.create({ data: { userId: user.id } });
+            }
+        } else {
+             return res.status(404).json({ error: 'User profile not found. Please register again.' });
+        }
     }
 
     if (user.status !== 'active') {
@@ -181,7 +256,7 @@ router.post('/login', async (req, res) => {
 // Verify Email (OTP)
 router.post('/verify', async (req, res) => {
   try {
-    const { email, token } = req.body;
+    const { email, token, role, phone, name } = req.body;
 
     if (!email || !token) {
       return res.status(400).json({ error: 'Email and verification code required' });
@@ -198,18 +273,97 @@ router.post('/verify', async (req, res) => {
       console.error('InsForge Verify Error:', authError);
       return res.status(400).json({ error: authError.message });
     }
+    
+    // DEBUG: Log authData keys to verify structure
+    console.log('Verify AuthData keys:', authData ? Object.keys(authData) : 'null');
+    if (authData) {
+        console.log('Verify AuthData.user:', authData.user ? 'present' : 'missing');
+        console.log('Verify AuthData.accessToken:', authData.accessToken ? 'present' : 'missing');
+        if ((authData as any).session) console.log('Verify AuthData.session:', 'present');
+    }
+
+    // Handle potential nested session structure (common in Supabase-like SDKs)
+    if (authData && (authData as any).session?.access_token) {
+        console.log('Using accessToken from session.access_token');
+        authData.accessToken = (authData as any).session.access_token;
+    } else if (authData && !authData.accessToken && (authData as any).session?.access_token) {
+        console.log('Adjusting accessToken from session.access_token (fallback)');
+        authData.accessToken = (authData as any).session.access_token;
+    }
 
     if (!authData || !authData.user || !authData.accessToken) {
+       console.error('Invalid authData structure:', authData);
        return res.status(400).json({ error: 'Verification failed' });
     }
 
     // Ensure user exists in our DB
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: authData.user.id },
     });
     
     if (!user) {
-        return res.status(404).json({ error: 'User profile not found' });
+        // Check if user exists by email (to handle re-registration or ID mismatch)
+        const existingUserByEmail = await prisma.user.findUnique({
+             where: { email: authData.user.email! }
+        });
+
+        if (existingUserByEmail) {
+             console.log(`User exists by email ${authData.user.email} but ID mismatch. Deleting old record to sync with InsForge.`);
+             // Delete old record to allow new creation with correct ID
+             await prisma.user.delete({
+                 where: { email: authData.user.email! }
+             });
+        }
+
+        // Try to get role/phone from metadata if not provided
+        const metadata = authData.user.metadata as Record<string, any> || {};
+        const userRole = role || metadata.role;
+        const userPhone = phone || metadata.phone;
+
+        if (userRole) {
+            // Create user profile if missing (deferred creation)
+            user = await prisma.user.create({
+                data: {
+                    id: authData.user.id,
+                    email: authData.user.email!,
+                    role: userRole as UserRole,
+                    phone: userPhone || '', // Fallback to empty string if missing
+                    passwordHash: 'managed_by_insforge',
+                    status: 'active'
+                }
+            });
+            
+            // Create specific profile
+            if (userRole === 'employer') {
+                 await prisma.employer.create({ 
+                    data: { 
+                        userId: user.id,
+                        name: name || undefined
+                    } 
+                 });
+            } 
+            // Note: Helper profile requires many fields, so we create it later when they fill the profile
+        } else {
+             return res.status(404).json({ error: 'User profile not found. Please register again.' });
+        }
+    }
+
+    // Ensure employer profile exists (especially if user was created via register but not verified yet)
+    if (user.role === 'employer') {
+        const employer = await prisma.employer.findUnique({ where: { userId: user.id } });
+        if (!employer) {
+             await prisma.employer.create({ 
+                 data: { 
+                     userId: user.id,
+                     name: name || undefined
+                 } 
+             });
+        } else if (name) {
+             await prisma.employer.update({
+                 where: { userId: user.id },
+                 data: { name }
+             });
+        }
     }
 
     res.json({

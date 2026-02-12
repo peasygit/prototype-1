@@ -5,21 +5,18 @@ import { api } from '@/utils/api';
 
 export default function DebugInfo() {
   const [status, setStatus] = useState<'checking' | 'ok' | 'error'>('checking');
-  const [apiUrl, setApiUrl] = useState('');
+  const [apiUrl, setApiUrl] = useState(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
   const [error, setError] = useState('');
 
   useEffect(() => {
     console.log('DebugInfo mounted'); // Verify mounting
-    // Get the API URL from environment or default
-    const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-    setApiUrl(url);
-
+    
     const checkHealth = async () => {
       try {
         // Try to hit the health endpoint
         // Note: We need to use fetch directly to avoid our api wrapper's error handling for this test
         // or just use a simple endpoint
-        await fetch(`${url}/health`, { method: 'GET' })
+        await fetch(`${apiUrl}/health`, { method: 'GET' })
             .then(res => {
                 if (res.ok) setStatus('ok');
                 else throw new Error(`Status: ${res.status}`);

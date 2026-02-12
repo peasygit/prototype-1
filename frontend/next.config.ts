@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: 'standalone', // Disabled to fix 404 on static assets in Zeabur
+  output: 'standalone', // Optimized for Zeabur/Docker
   // distDir: 'dist', // Remove custom distDir to use default .next
   images: {
     unoptimized: true,
