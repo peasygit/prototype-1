@@ -20,6 +20,19 @@ model User {
   helper        Helper?
   events        Event[]
   subscriptions Subscription[]
+  notifications Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(info)
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
 }
 
 model Employer {
@@ -210,4 +223,12 @@ enum SubscriptionStatus {
   active
   expired
   cancelled
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+  match
 }

@@ -143,6 +143,55 @@ router.post(
         });
       }
 
+      // Recalculate matches for all active jobs
+      try {
+        const activeJobs = await prisma.job.findMany({
+          where: { employerId: employer.id, status: 'active' },
+          include: {
+            matches: {
+              include: {
+                helper: {
+                  include: {
+                    skills: true,
+                    careExperience: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        const employerWithComputed = {
+          ...employer,
+          hasChildren: (employer.children || 0) > 0,
+          hasElderly: !!employer.hasElderly,
+        };
+
+        for (const job of activeJobs) {
+          for (const match of job.matches) {
+            const { totalScore, breakdown } = await calculateMatchScore(
+              match.helper,
+              job,
+              employerWithComputed
+            );
+
+            // Update match if score changed
+            if (match.matchScore !== totalScore) {
+              await prisma.match.update({
+                where: { id: match.id },
+                data: {
+                  matchScore: totalScore,
+                  matchBreakdown: breakdown as any, // Cast to any to avoid strict JSON type issues
+                },
+              });
+            }
+          }
+        }
+      } catch (matchError) {
+        console.error('Failed to recalculate matches:', matchError);
+        // Don't block the response, just log the error
+      }
+
       res.status(201).json(employer);
     } catch (error) {
       console.error('Create/update employer profile error:', error);

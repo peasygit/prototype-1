@@ -1,5 +1,7 @@
 import { Router, Request } from 'express';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { insforge } from '../utils/insforge';
 import { authenticate } from '../middleware/auth';
 
@@ -9,8 +11,29 @@ interface AuthRequest extends Request {
 }
 
 const router = Router();
+
+// Ensure upload directory exists
+const uploadDir = path.join(__dirname, '../../public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure storage (Local Disk Storage)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename: userId-timestamp-originalName
+    const userId = (req as AuthRequest).user?.id || 'anonymous';
+    const timestamp = Date.now();
+    const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${userId}-${timestamp}-${sanitizedOriginalName}`);
+  }
+});
+
 const upload = multer({ 
-  storage: multer.memoryStorage(),
+  storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   }
@@ -24,33 +47,16 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthRequest, r
     }
 
     if (!req.user) {
+      // Clean up uploaded file if authentication fails (though middleware should catch this)
+      fs.unlinkSync(req.file.path);
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // 1. Upload to InsForge Storage
-    // Using 'avatars' bucket. Ensure this bucket exists in InsForge Dashboard or create it via MCP if possible (but I can't).
-    // Filename: userId/timestamp-filename
-    const timestamp = Date.now();
-    // Sanitize filename
-    const sanitizedOriginalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = `${req.user.id}/${timestamp}-${sanitizedOriginalName}`;
-
-    // Convert Buffer to Blob for SDK
-    const blob = new Blob([new Uint8Array(req.file.buffer)], { type: req.file.mimetype });
-
-    const { data, error } = await insforge.storage
-      .from('avatars')
-      .upload(filename, blob);
-
-    if (error) {
-      console.error('Storage upload error:', error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    // 2. Get Public URL
-    const publicUrl = insforge.storage
-      .from('avatars')
-      .getPublicUrl(filename);
+    // Construct Public URL
+    // Assuming backend is served at process.env.API_URL or relative path
+    // For local dev, we use relative path from frontend proxy or absolute URL if needed
+    const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const publicUrl = `${baseUrl}/uploads/${req.file.filename}`;
 
     res.json({ url: publicUrl });
   } catch (error) {
