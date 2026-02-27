@@ -1,6 +1,7 @@
 import { Router, Request } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
+import { generateReadableId } from '../utils/idGenerator';
 
 const router = Router();
 
@@ -224,6 +225,7 @@ router.post(
         helper = await prisma.helper.create({
           data: {
             userId: req.user!.id,
+            readableId: generateReadableId('helper'),
             fullName,
             displayName,
             nationality,

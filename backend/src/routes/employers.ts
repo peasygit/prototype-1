@@ -2,6 +2,7 @@ import { Router, Request } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 import { calculateMatchScore } from '../utils/matching';
+import { generateReadableId } from '../utils/idGenerator';
 
 const router = Router();
 
@@ -117,6 +118,7 @@ router.post(
         employer = await prisma.employer.create({
           data: {
             userId: req.user.id,
+            readableId: generateReadableId('employer'),
             name,
             householdSize,
             adults,

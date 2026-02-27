@@ -24,6 +24,7 @@ model User {
 
 model Employer {
   id                    String   @id @default(uuid())
+  readableId            String?  @unique
   userId                String   @unique
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name                  String?
@@ -48,8 +49,9 @@ model Employer {
 }
 
 model Helper {
-  id                    String         @id @default(uuid())
-  userId                String         @unique
+  id                    String   @id @default(uuid())
+  readableId            String?  @unique
+  userId                String   @unique
   user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName              String
   displayName           String?

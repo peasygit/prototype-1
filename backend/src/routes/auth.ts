@@ -3,6 +3,7 @@ import { prisma } from '../utils/prisma';
 import { insforge, createServiceClient } from '../utils/insforge';
 import { authenticate } from '../middleware/auth';
 import { UserRole } from '@prisma/client';
+import { generateReadableId } from '../utils/idGenerator';
 
 const router = Router();
 
@@ -19,6 +20,12 @@ router.post('/register', async (req, res) => {
     // Validation
     if (!email || !password || !role) {
       return res.status(400).json({ error: 'Email, password and role required' });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
 
     if (!['employer', 'helper', 'admin'].includes(role)) {
@@ -119,10 +126,20 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
     const { error } = await insforge.auth.sendResetPasswordEmail(email);
 
     if (error) {
       console.error('Forgot password error:', error);
+      // Handle JSON parse error from SDK (upstream API issue with invalid input)
+      if (error.message && (error.message.includes('is not valid JSON') || error.message.includes('Unexpected token'))) {
+         return res.status(400).json({ error: 'Invalid email address or service temporarily unavailable' });
+      }
       return res.status(400).json({ error: error.message });
     }
 
@@ -168,6 +185,12 @@ router.post('/login', async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
 
     // 1. Authenticate with InsForge
@@ -226,7 +249,12 @@ router.post('/login', async (req, res) => {
             });
             
             if (userRole === 'employer') {
-                 await prisma.employer.create({ data: { userId: user.id } });
+                 await prisma.employer.create({ 
+                    data: { 
+                        userId: user.id,
+                        readableId: generateReadableId('employer')
+                    } 
+                 });
             }
         } else {
              return res.status(404).json({ error: 'User profile not found. Please register again.' });
@@ -260,6 +288,12 @@ router.post('/verify', async (req, res) => {
 
     if (!email || !token) {
       return res.status(400).json({ error: 'Email and verification code required' });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
 
     // Verify OTP with InsForge
@@ -338,6 +372,7 @@ router.post('/verify', async (req, res) => {
                  await prisma.employer.create({ 
                     data: { 
                         userId: user.id,
+                        readableId: generateReadableId('employer'),
                         name: name || undefined
                     } 
                  });
@@ -355,6 +390,7 @@ router.post('/verify', async (req, res) => {
              await prisma.employer.create({ 
                  data: { 
                      userId: user.id,
+                     readableId: generateReadableId('employer'),
                      name: name || undefined
                  } 
              });

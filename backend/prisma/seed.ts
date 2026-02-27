@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole, UserStatus, ContractStatus } from '@prisma/client';
+import { generateReadableId } from '../src/utils/idGenerator';
 import * as bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
 import { Pool } from 'pg';
@@ -41,6 +42,7 @@ async function main() {
       status: UserStatus.active,
       employer: {
         create: {
+          readableId: generateReadableId('employer'),
           name: 'John Doe Family',
           location: 'Central, Hong Kong',
           householdSize: 4,
@@ -65,7 +67,9 @@ async function main() {
       status: UserStatus.active,
       helper: {
         create: {
+          readableId: generateReadableId('helper'),
           fullName: 'Maria Santos',
+          displayName: 'Maria',
           nationality: 'Philippines',
           birthdate: new Date('1990-05-15'),
           currentLocation: 'Hong Kong',
