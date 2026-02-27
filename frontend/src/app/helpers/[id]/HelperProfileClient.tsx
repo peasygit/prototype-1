@@ -47,6 +47,7 @@ interface Helper {
   zodiacEmoji: string;
   matchScore: number;
   verified: boolean;
+  profilePhotoUrl?: string;
 }
 
 interface HelperProfileClientProps {
@@ -102,7 +103,8 @@ export default function HelperProfileClient({ id }: HelperProfileClientProps) {
           zodiac: data.westernZodiac || 'Aries',
           zodiacEmoji: '♈', // Simplified
           matchScore: 90, // Mock
-          verified: true
+          verified: true,
+          profilePhotoUrl: data.profilePhotoUrl
         };
         
         setHelper(transformedHelper);
@@ -161,55 +163,68 @@ export default function HelperProfileClient({ id }: HelperProfileClientProps) {
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
-              <div className="h-48 bg-gradient-to-r from-[#DB0011] via-[#FF3B3F] to-[#FF8C00] relative">
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <button className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-colors border border-white/30">
-                    <Share2 className="w-5 h-5 text-white" />
-                  </button>
-                  <button 
-                    onClick={() => setIsSaved(!isSaved)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
-                      isSaved ? 'bg-white border-white' : 'bg-white/20 backdrop-blur-md hover:bg-white/30 border-white/30'
-                    }`}
-                  >
-                    <Heart className={`w-5 h-5 ${isSaved ? 'text-[#DB0011] fill-current' : 'text-white'}`} />
-                  </button>
+            <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 p-8">
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="w-32 h-32 shrink-0 bg-gray-100 rounded-2xl flex items-center justify-center text-4xl font-bold text-gray-400 overflow-hidden">
+                  {helper.profilePhotoUrl ? (
+                    <img 
+                      src={helper.profilePhotoUrl} 
+                      alt={helper.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    helper.name.charAt(0)
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h1 className="text-3xl font-bold text-black">{helper.name}</h1>
+                        {helper.verified && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-sm font-semibold rounded-full border border-green-100">
+                            <Check className="w-4 h-4" />Verified
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-500 mb-0 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-4 h-4 text-gray-400" />{helper.nationality}
+                        </span>
+                        <span>{helper.age} years old</span>
+                        <span className="flex items-center gap-1.5">
+                          <Briefcase className="w-4 h-4 text-gray-400" />{helper.experience} years exp
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Home className="w-4 h-4 text-gray-400" />{helper.currentLocation}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 shrink-0">
+                      <button className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200">
+                        <Share2 className="w-5 h-5 text-gray-600" />
+                      </button>
+                      <button 
+                        onClick={() => setIsSaved(!isSaved)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
+                          isSaved ? 'bg-red-50 border-red-200' : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        <Heart className={`w-5 h-5 ${isSaved ? 'text-[#DB0011] fill-current' : 'text-gray-400'}`} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              
-              <div className="px-8 pb-8">
-                <div className="flex flex-col md:flex-row md:items-end gap-6 relative z-10">
-                  <div className="w-40 h-40 -mt-20 bg-gradient-to-br from-red-50 to-red-100 rounded-2xl flex items-center justify-center text-5xl font-bold text-[#DB0011] border-4 border-white shadow-xl">
-                    {helper.name.charAt(0)}
-                  </div>
-                  
-                  <div className="flex-1 pb-1">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h1 className="text-3xl font-bold text-black">{helper.name}</h1>
-                      {helper.verified && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 text-sm font-semibold rounded-full border border-green-100">
-                          <Check className="w-4 h-4" />Verified
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-gray-500 mb-0 font-medium">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-gray-400" />{helper.nationality}
-                      </span>
-                      <span>{helper.age} years old</span>
-                      <span className="flex items-center gap-1.5">
-                        <Briefcase className="w-4 h-4 text-gray-400" />{helper.experience} years exp
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Home className="w-4 h-4 text-gray-400" />{helper.currentLocation}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            </div>
 
-                <div className="mt-8 flex items-center gap-4">
+            <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 p-8">
+              <div className="space-y-6">
+
+                <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star 
@@ -224,7 +239,7 @@ export default function HelperProfileClient({ id }: HelperProfileClientProps) {
                   </div>
                 </div>
 
-                <div className="mt-8 p-5 bg-gradient-to-r from-[#F0FDF4] to-[#F7FEE7] rounded-2xl border border-green-100/50 shadow-sm">
+                <div className="p-5 bg-gradient-to-r from-[#F0FDF4] to-[#F7FEE7] rounded-2xl border border-green-100/50 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
@@ -294,7 +309,7 @@ export default function HelperProfileClient({ id }: HelperProfileClientProps) {
             <div className="bg-white rounded-2xl p-8 border border-gray-100">
               <h2 className="text-xl font-semibold text-black mb-6">Skills & Expertise</h2>
               <div className="flex flex-wrap gap-2 mb-6">
-                {helper.skills.map((skill: string) => (
+                {helper.skills.map((skill) => (
                   <span key={skill} className="px-4 py-2 bg-red-50 text-red-700 font-medium rounded-full">
                     {skill}
                   </span>

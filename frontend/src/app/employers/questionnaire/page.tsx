@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react';
 import { api } from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
 
 interface Field {
   name: string;
@@ -67,6 +68,7 @@ const steps: Step[] = [
 
 export default function Questionnaire() {
   const router = useRouter();
+  const { login } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,16 +158,14 @@ export default function Questionnaire() {
            // We still store the DEV_TOKEN if available to allow "I have verified" button to proceed
            // But in a real app, we might wait. Here we store it but block UI.
            if (authData.token) {
-             localStorage.setItem('token', authData.token);
-             localStorage.setItem('user', JSON.stringify(authData.user));
+             login(authData.token, authData.user);
            }
            setIsSubmitting(false);
            return;
         }
 
         token = authData.token;
-        localStorage.setItem('token', authData.token);
-        localStorage.setItem('user', JSON.stringify(authData.user));
+        login(authData.token, authData.user);
       }
 
       // 2. Create Profile
@@ -239,8 +239,7 @@ export default function Questionnaire() {
                 name: formData.name
              });
              
-             localStorage.setItem('token', data.token);
-             localStorage.setItem('user', JSON.stringify(data.user));
+             login(data.token, data.user);
              
              setVerificationPending(false);
              // Retry submission (create profile/job)

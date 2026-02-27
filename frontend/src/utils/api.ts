@@ -70,4 +70,37 @@ export const api = {
   delete<T>(endpoint: string, options: RequestOptions = {}) {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   },
+
+  async upload<T>(endpoint: string, formData: FormData, options: RequestOptions = {}): Promise<T> {
+    const { token, headers, ...customConfig } = options;
+    
+    const requestHeaders: Record<string, string> = {};
+
+    if (token) {
+      requestHeaders['Authorization'] = `Bearer ${token}`;
+    } else if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        requestHeaders['Authorization'] = `Bearer ${storedToken}`;
+      }
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        ...requestHeaders,
+        ...(headers as Record<string, string>),
+      },
+      ...customConfig,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    return data;
+  },
 };

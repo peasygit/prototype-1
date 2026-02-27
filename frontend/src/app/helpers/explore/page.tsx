@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Search, Filter, MapPin, Briefcase, Star, Clock } from 'lucide-react';
 import { api } from '@/utils/api';
@@ -65,8 +64,6 @@ export default function ExploreHelpers() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       {/* Smart Match Banner */}
       <div className="bg-gradient-to-r from-red-50 to-white border-b border-red-100 py-12">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-8 text-center lg:text-left flex flex-col lg:flex-row items-center justify-between gap-8">

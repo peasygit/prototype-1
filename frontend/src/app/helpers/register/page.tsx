@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Check, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
 
 interface Field {
   name: string;
@@ -12,6 +12,7 @@ interface Field {
   type: string;
   placeholder?: string;
   options?: string[];
+  accept?: string; // For file input
 }
 
 interface Step {
@@ -31,6 +32,7 @@ const steps: Step[] = [
   {
     title: 'Personal Information',
     fields: [
+      { name: 'profilePhoto', label: 'Profile Photo', type: 'file', accept: 'image/*' },
       { name: 'name', label: 'Full Name', type: 'text', placeholder: 'Enter your full name' },
       { name: 'birthDate', label: 'Date of Birth', type: 'date' },
       { name: 'nationality', label: 'Nationality', type: 'select', options: ['Philippines', 'Indonesia', 'Thailand', 'India', 'Other'] },
@@ -66,9 +68,10 @@ const steps: Step[] = [
 ];
 
 export default function HelperRegister() {
-  const router = useRouter();
+  const { login } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -78,6 +81,21 @@ export default function HelperRegister() {
   const handleInputChange = (name: string, value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(''); // Clear error on input
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      // Basic validation
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+      setSelectedFile(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      handleInputChange('profilePhoto', previewUrl);
+    }
   };
 
   const handleMultiSelect = (name: string, option: string) => {
@@ -170,8 +188,7 @@ export default function HelperRegister() {
         if (authData.requireEmailVerification || (authData as any).verificationRequired) {
           setVerificationPending(true);
           if (authData.token) {
-            localStorage.setItem('token', authData.token);
-            localStorage.setItem('user', JSON.stringify(authData.user));
+            login(authData.token, authData.user);
           }
           setIsSubmitting(false);
           return;
@@ -179,8 +196,7 @@ export default function HelperRegister() {
 
         // Save token
         token = authData.token;
-        localStorage.setItem('token', authData.token);
-        localStorage.setItem('user', JSON.stringify(authData.user));
+        login(authData.token, authData.user);
       }
 
       // Transform skills and experience
@@ -209,6 +225,22 @@ export default function HelperRegister() {
       if (specialties.includes('Pet Care')) careExperience.push({ targetType: 'pet', yearsExperience: yearsExp });
 
       // 2. Create Profile
+      let profilePhotoUrl = null;
+
+      if (selectedFile) {
+        try {
+          const uploadData = new FormData();
+          uploadData.append('file', selectedFile);
+          const { url } = await api.upload<{ url: string }>('/upload', uploadData, {
+            token: token || undefined
+          });
+          profilePhotoUrl = url;
+        } catch (uploadError) {
+          console.error('Photo upload failed:', uploadError);
+          // Optional: decide if we should stop or continue without photo
+        }
+      }
+
       const profileData = {
         fullName: formData.name,
         displayName: formData.name.split(' ')[0], // Simple heuristic
@@ -221,6 +253,7 @@ export default function HelperRegister() {
         yearsExperienceLocal: 0, // Default or add field
         languages: formData.languages,
         aboutMe: formData.bio,
+        profilePhotoUrl,
         expectedSalaryMin: convertSalary(formData.salary),
         skills,
         careExperience,
@@ -251,8 +284,7 @@ export default function HelperRegister() {
                 phone: formData.phone
              });
              
-             localStorage.setItem('token', data.token);
-             localStorage.setItem('user', JSON.stringify(data.user));
+             login(data.token, data.user);
              
              setVerificationPending(false);
              
@@ -276,14 +308,6 @@ export default function HelperRegister() {
   if (verificationPending) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-            </div>
-          </div>
-        </header>
-        
         <main className="py-24 px-6">
           <div className="max-w-xl mx-auto text-center">
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -402,6 +426,33 @@ export default function HelperRegister() {
               {currentStepData.fields.map((field) => (
                 <div key={field.name}>
                   <label className="block text-sm font-medium text-black mb-2">{field.label}</label>
+                  {field.type === 'file' && (
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border border-gray-200">
+                        {formData[field.name] ? (
+                          <img 
+                            src={formData[field.name]} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Upload className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept={field.accept}
+                        onChange={handleFileChange}
+                        className="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-red-50 file:text-red-700
+                          hover:file:bg-red-100
+                        "
+                      />
+                    </div>
+                  )}
                   {field.type === 'text' || field.type === 'email' || field.type === 'password' ? (
                     <input
                       type={field.type}

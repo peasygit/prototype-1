@@ -1,13 +1,11 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
 export default function ProcessPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-[#F9FAFB] to-white text-center">

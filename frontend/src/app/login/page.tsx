@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, ChevronLeft } from 'lucide-react';
 import { api } from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Login() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,8 +35,7 @@ export default function Login() {
           setVerificationPending(true);
           // Still store token if available (DEV_TOKEN) to allow proceeding
           if (data.token) {
-             localStorage.setItem('token', data.token);
-             localStorage.setItem('user', JSON.stringify(data.user));
+             login(data.token, data.user);
           } else {
              // If no token (shouldn't happen with our backend fix), we can't let them proceed
              // But we show the screen anyway. The button will just fail.
@@ -45,9 +46,8 @@ export default function Login() {
           return;
       }
 
-      // Store token
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Store token and update context
+      login(data.token, data.user);
 
       // Check if user role matches selected type (optional, but good UX)
       if (data.user.role !== userType) {
@@ -101,8 +101,7 @@ export default function Login() {
                role: userType // Pass selected role as fallback
             });
             
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            login(data.token, data.user);
             
             // Check if user role matches selected type
             if (data.user.role !== userType) {
@@ -188,18 +187,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-            <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-black font-medium">
-              <ChevronLeft className="w-4 h-4" />Back to Home
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="py-16 px-6">
+      <main className="py-24 px-6">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-semibold text-black mb-3">Login</h1>

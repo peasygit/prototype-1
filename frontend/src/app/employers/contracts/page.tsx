@@ -3,37 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FileText, Users, Heart, Calendar, DollarSign, HelpCircle, AlertTriangle, MoreHorizontal, Download, Plus, CheckCircle2, Clock } from 'lucide-react';
-import Navbar from '@/components/Navbar'; // Or create a custom header for dashboard if needed, but Navbar is fine for now
 
 export default function ContractsPage() {
   const [activeTab, setActiveTab] = useState('contracts');
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      {/* Header - Custom for Dashboard based on myaccount.html */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#EDEEF2]">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">
-              Peasy
-            </Link>
-            <nav className="flex items-center gap-8">
-              <Link href="/helpers/explore" className="text-[#6E727D] hover:text-black font-medium transition-colors">
-                Find Helpers
-              </Link>
-              <Link href="/for-helpers" className="text-[#6E727D] hover:text-black font-medium transition-colors">
-                For Helpers
-              </Link>
-              <Link href="/process" className="text-[#6E727D] hover:text-black font-medium transition-colors">
-                Process
-              </Link>
-              <Link href="/employers/contracts" className="text-[#DB0011] font-medium transition-colors">
-                My Account
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-[1200px] mx-auto px-6 lg:px-8 py-12 grid grid-cols-[240px_1fr] gap-12 min-h-screen">
         

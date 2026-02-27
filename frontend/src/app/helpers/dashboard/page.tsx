@@ -4,16 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  MapPin, 
-  Calendar, 
-  Star, 
   Bell, 
-  ChevronRight, 
   Loader2,
-  Users,
-  Home,
-  Baby,
-  Utensils
+  Settings, 
+  User, 
+  LogOut,
+  Clock,
+  Briefcase
 } from 'lucide-react';
 import { api } from '@/utils/api';
 
@@ -44,6 +41,7 @@ export default function HelperDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [helperName, setHelperName] = useState<string>('Helper');
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [stats, setStats] = useState<HelperStats>({
     totalApplications: 0,
     shortlistedCount: 0,
@@ -60,6 +58,7 @@ export default function HelperDashboard() {
         // 1. Get profile
         const profile = await api.get<any>('/helpers/profile');
         setHelperName(profile.fullName || profile.displayName || 'Helper');
+        setProfilePhotoUrl(profile.profilePhotoUrl || null);
         
         // 2. Get stats
         const statsData = await api.get<HelperStats>('/helpers/stats');
@@ -115,12 +114,6 @@ export default function HelperDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -131,44 +124,28 @@ export default function HelperDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-              <nav className="hidden md:flex items-center gap-8">
-                <Link href="/helpers/dashboard" className="text-black font-semibold">Dashboard</Link>
-                <Link href="/helpers/explore" className="text-gray-500 hover:text-black transition-colors">Jobs</Link>
-                <Link href="/academy" className="text-gray-500 hover:text-black transition-colors">Academy</Link>
-              </nav>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-500 hover:text-black">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-white"></span>
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 pl-1 pr-4 py-1 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold text-sm">
-                  {helperName.charAt(0)}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{helperName}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-[1440px] mx-auto px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-[1fr_320px] gap-8">
           
           {/* Main Content */}
           <div className="space-y-8">
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Good morning, {helperName} 👋</h1>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border border-gray-200">
+                  {profilePhotoUrl ? (
+                    <img 
+                      src={profilePhotoUrl} 
+                      alt={helperName} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-bold text-gray-400">
+                      {helperName.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Good morning, {helperName} 👋</h1>
+              </div>
               <div className="flex gap-3">
                 <Link href="/helpers/profile/edit" className="inline-flex items-center justify-center px-5 py-2.5 border border-gray-200 rounded-full text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all">
                   Edit Profile

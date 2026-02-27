@@ -1,70 +1,60 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Star, MapPin, Calendar, Briefcase, MessageCircle, User, Bell, ChevronRight, Heart, Filter, Search, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, Briefcase, MessageCircle, Heart, Filter, Loader2 } from 'lucide-react';
 import { api } from '@/utils/api';
 import { useRouter } from 'next/navigation';
+import EmployerProfileSection from '@/components/EmployerProfileSection';
+import EmployerRequirementsSection from '@/components/EmployerRequirementsSection';
 
 export default function EmployerDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'matches' | 'saved' | 'messages'>('matches');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [employerName, setEmployerName] = useState('User');
+  const [profile, setProfile] = useState<any>(null);
   const [matches, setMatches] = useState<any[]>([]);
+  const [employerName, setEmployerName] = useState('User');
 
-  useEffect(() => {
-    // Define async function
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Check for token first
-        const token = localStorage.getItem('token');
-        if (!token) {
-           // Redirect will be handled by protected route check usually, 
-           // but let's be safe and redirect here too
+  const fetchData = useCallback(async () => {
+    try {
+      // Check for token first
+      const token = localStorage.getItem('token');
+      if (!token) {
+         router.push('/login');
+         return;
+      }
+
+      // 1. Get profile for name
+      const profileData = await api.get<any>('/employers/profile');
+      setProfile(profileData);
+      
+      let displayName = 'User';
+      if (profileData.name) {
+        displayName = profileData.name;
+      } else if (profileData.user && profileData.user.email) {
+        // Fallback to email username if name is missing
+        displayName = profileData.user.email.split('@')[0];
+      }
+      
+      setEmployerName(displayName);
+
+      // 2. Get matches
+      const matchesData = await api.get<any>('/matches');
+      setMatches(matchesData.data || []);
+    } catch (err: any) {
+      console.error('Fetch dashboard data error:', err);
+      if (err.message === 'No token provided' || err.status === 401) {
            router.push('/login');
            return;
-        }
-
-        // 1. Get profile for name
-        const profile = await api.get<any>('/employers/profile');
-        
-        let displayName = 'User';
-        if (profile.name) {
-          displayName = profile.name;
-        } else if (profile.user && profile.user.email) {
-          // Fallback to email username if name is missing
-          displayName = profile.user.email.split('@')[0];
-        }
-        
-        setEmployerName(displayName);
-
-        // 2. Get matches
-        const matchesData = await api.get<any>('/matches');
-        setMatches(matchesData.data || []);
-      } catch (err: any) {
-        console.error('Fetch dashboard data error:', err);
-        if (err.message === 'No token provided' || err.status === 401) {
-             router.push('/login');
-             return;
-        }
-        setError('Failed to load data');
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
-    // Call it
+  useEffect(() => {
     fetchData();
-  }, [router]); // Dependencies are stable
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -76,34 +66,21 @@ export default function EmployerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-extrabold tracking-tight text-black">Peasy</Link>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={handleLogout}
-                className="text-sm font-medium text-gray-600 hover:text-black"
-              >
-                Logout
-              </button>
-              <button className="relative p-2 text-gray-600 hover:text-black">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full"></span>
-              </button>
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold">
-                {employerName.charAt(0)}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-[1200px] mx-auto px-6 lg:px-8 py-8">
         {/* Welcome */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-black mb-2">Welcome back, {employerName}</h1>
+          <p className="text-gray-600">Here is your dashboard overview.</p>
+        </div>
+
+        {/* Profile & Requirements Sections */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <EmployerProfileSection profile={profile} onUpdate={fetchData} />
+          <EmployerRequirementsSection profile={profile} onUpdate={fetchData} />
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Recommended Matches</h2>
           <p className="text-gray-600">We found {matches.length} suitable helpers based on your needs</p>
         </div>
 
@@ -185,18 +162,11 @@ export default function EmployerDashboard() {
                             <span className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />{helper.nationality}
                             </span>
-                            {/* <span>{helper.age} years old</span> */}
                             <span className="flex items-center gap-1">
                               <Briefcase className="w-4 h-4" />{helper.yearsExperienceTotal} years exp
                             </span>
                           </div>
                         </div>
-                        {/* Rating placeholder */}
-                        {/* <div className="flex items-center gap-1">
-                          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                          <span className="font-semibold text-black">4.8</span>
-                          <span className="text-sm text-gray-500">(12 reviews)</span>
-                        </div> */}
                       </div>
 
                       <p className="text-gray-700 mb-4">{helper.aboutMe || 'No self-introduction'}</p>
