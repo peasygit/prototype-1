@@ -1,8 +1,8 @@
 import { createClient } from '@insforge/sdk';
 
 const config = {
-  baseUrl: process.env.INSFORGE_API_URL || 'https://7jy9rxai.us-east.insforge.app',
-  anonKey: process.env.INSFORGE_ANON_KEY || 'ik_79a7478f43b81c046050de130453fa02'
+  baseUrl: process.env.INSFORGE_API_URL || 'https://hxsd794u.us-east.insforge.app',
+  anonKey: process.env.INSFORGE_ANON_KEY || 'ik_bf5fcd4ba1b958ecf0da0f5248757869'
 };
 
 export const insforge = createClient(config);

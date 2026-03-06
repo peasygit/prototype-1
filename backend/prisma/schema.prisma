@@ -21,6 +21,7 @@ model User {
   events        Event[]
   subscriptions Subscription[]
   notifications Notification[]
+  posts         Post[]
 }
 
 model Notification {
@@ -231,4 +232,14 @@ enum NotificationType {
   warning
   error
   match
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

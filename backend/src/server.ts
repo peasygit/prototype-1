@@ -10,6 +10,7 @@ import matchesRouter from './routes/matches';
 import adminRouter from './routes/admin';
 import uploadRouter from './routes/upload';
 import notificationRouter from './routes/notifications';
+import postsRouter from './routes/posts';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/matches', matchesRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/posts', postsRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {
