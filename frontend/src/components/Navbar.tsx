@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { User, LogOut, LayoutDashboard } from 'lucide-react';
 import NotificationsPopover from '@/components/NotificationsPopover';
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { user, isAuthenticated, logout, isLoading } = useAuth();
@@ -22,6 +24,11 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Hide Navbar on specific pages that have their own header
+  if (pathname === '/employers/questionnaire' || pathname === '/helpers/register') {
+    return null;
+  }
 
   const dashboardLink = user?.role === 'employer' ? '/employers/dashboard' : '/helpers/dashboard';
 
